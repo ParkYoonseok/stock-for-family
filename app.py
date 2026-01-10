@@ -223,27 +223,13 @@ def get_detailed_daily_data(ticker, days=1825):
 # =========================================================
 # [UI 구성] 사이드바 제거 -> 메인 화면 중앙 배치
 # =========================================================
-st.markdown("""
-    <style>
-    /* type="primary" 버튼을 파란색으로 변경 */
-    div.stButton > button[kind="primary"] {
-        background-color: #0078FF !important; /* 파란색 */
-        border-color: #0078FF !important;
-        color: white !important;
-    }
-    /* 마우스를 올렸을 때(Hover) 약간 진한 파란색으로 */
-    div.stButton > button[kind="primary"]:hover {
-        background-color: #0056b3 !important;
-        border-color: #0056b3 !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
+
 # 안내 문구 (아직 분석 결과가 없을 때만 보임)
 if 'result' not in st.session_state:
     st.info("👇 아래 **'분석 시작하기'** 버튼을 눌러주세요.")
 
 # 🔍 [수정] 메인 화면에 크고 잘 보이는 버튼 배치
-st.button("분석 시작하기 (클릭)", type="primary", use_container_width=True):
+if st.button("분석 시작하기 (클릭)", type="primary", use_container_width=True):
     df_all = get_naver_market_data()
 
     cond_cap = df_all['시가총액'] >= CFG['MIN_CAP']
@@ -330,4 +316,3 @@ if 'result' in st.session_state:
                     """)
                 else:
                     st.error("데이터가 없습니다.")
-
