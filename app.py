@@ -330,7 +330,7 @@ with st.sidebar:
         in_min_amt = st.number_input("최소 거래대금 (억원)", value=3, step=1) * 100000000
 
     with st.expander("제외할 업종/키워드", expanded=False):
-        default_exclude = '은행|HDC현대산업개발|페인트|코리안리|지주|홀딩스|금융|증권|카드|공사|한국전력|한전KPS|강원랜드|자산|보험|레저|스팩|리츠|생명|해상'
+        default_exclude = '은행|HDC|페인트|코리안리|지주|홀딩스|금융|증권|카드|공사|한국전력|한전KPS|강원랜드|자산|보험|레저|스팩|리츠|생명|해상|화재|시멘트'
         in_exclude = st.text_area("제외 키워드 ( '|' 로 구분)", value=default_exclude, height=100)
 
     st.markdown("---")
@@ -572,6 +572,7 @@ if st.session_state['analysis_done'] and not st.session_state['result_df'].empty
                         st.success("✅ 현재 주가가 240일 장기 이동평균선 아래에 있습니다. (저점 매수 기회 가능성)")
                     else:
                         st.info("ℹ️ 현재 주가가 240일 이동평균선 위에 있습니다. (추세 상승 중)")
+
 
 
 
