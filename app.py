@@ -15,7 +15,7 @@ import os
 # [설정] 페이지 기본 설정 (가장 위에 있어야 함)
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="지인 전용 주식 추천", 
+    page_title="주식 추천", 
     page_icon="💎", 
     layout="wide",
     initial_sidebar_state="expanded"
@@ -572,6 +572,7 @@ if st.session_state['analysis_done'] and not st.session_state['result_df'].empty
                         st.success("✅ 현재 주가가 240일 장기 이동평균선 아래에 있습니다. (저점 매수 기회 가능성)")
                     else:
                         st.info("ℹ️ 현재 주가가 240일 이동평균선 위에 있습니다. (추세 상승 중)")
+
 
 
 
