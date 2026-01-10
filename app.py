@@ -144,7 +144,7 @@ def check_password():
         st.markdown("<h3 style='margin-top: 0px; margin-bottom: 40px; font-weight: 400;'>Family Stock</h3>", unsafe_allow_html=True)
 
         with st.form("login_form"):
-            password = st.text_input("Password", type="password", placeholder="PIN 번호 입력", label_visibility="collapsed")
+            password = st.text_input("Password", type="password", placeholder="비밀번호 입력", label_visibility="collapsed")
 
             st.markdown("<br>", unsafe_allow_html=True)
 
@@ -556,6 +556,7 @@ if st.session_state['analysis_done'] and not st.session_state['result_df'].empty
                         st.success("✅ 현재 주가가 240일 장기 이동평균선 아래에 있습니다. (저점 매수 기회 가능성)")
                     else:
                         st.info("ℹ️ 현재 주가가 240일 이동평균선 위에 있습니다. (추세 상승 중)")
+
 
 
 
