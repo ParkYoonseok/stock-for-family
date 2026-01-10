@@ -264,7 +264,7 @@ if 'result' in st.session_state:
     st.caption("종목을 선택하면 5년치 주가 흐름을 보여줍니다.")
     
     ticker_list = [f"{row['Name']} ({ticker})" for ticker, row in df_final.iterrows()]
-    selected = st.selectbox("종목 선택:", ticker_list)
+    selected = st.selectbox("종목 선택", ticker_list)
     
     if selected:
         code = selected.split('(')[-1].replace(')', '')
@@ -312,6 +312,7 @@ if 'result' in st.session_state:
                 else:
 
                     st.error("데이터가 없습니다.")
+
 
 
 
