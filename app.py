@@ -294,7 +294,7 @@ if 'result' in st.session_state:
                     plt.rcParams['axes.unicode_minus'] = False
                     # -------------------------------------------------------
                     
-                    fig, ax = plt.subplots(figsize=(10, 5))
+                    fig, ax = plt.subplots(figsize=(6, 4))
                     ax.plot(df_daily.index, df_daily['Close'], label='주가', color='black', alpha=0.6)
                     
                     # 이동평균선
@@ -316,6 +316,7 @@ if 'result' in st.session_state:
                     """)
                 else:
                     st.error("데이터가 없습니다.")
+
 
 
 
