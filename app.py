@@ -30,6 +30,9 @@ st.set_page_config(
 # ---------------------------------------------------------
 # [기능] 비밀번호 체크 (투명 배경 + 검정색 텍스트 수정)
 # ---------------------------------------------------------
+# ---------------------------------------------------------
+# [기능] 비밀번호 체크 (완전 투명 배경 + 검정 글씨)
+# ---------------------------------------------------------
 def check_password():
     """윈도우 잠금화면 스타일의 로그인"""
     if "authenticated" not in st.session_state:
@@ -39,7 +42,7 @@ def check_password():
         return True
 
     # -----------------------------------------------------
-    # [CSS] 텍스트 색상을 검정색으로 변경
+    # [CSS] 완전 투명화(Transparent) 적용
     # -----------------------------------------------------
     st.markdown(
         """
@@ -56,69 +59,72 @@ def check_password():
         /* 2. 상단 헤더 숨김 */
         header {visibility: hidden;}
         
-        /* 3. 로그인 컨테이너 */
+        /* 3. 로그인 컨테이너 (유리 효과) */
         div[data-testid="column"] {
-            background-color: rgba(0, 0, 0, 0.2); 
+            background-color: rgba(255, 255, 255, 0.1); /* 전체 박스만 아주 살짝 흰색 틴트 */
             padding: 50px;
             border-radius: 20px;
-            backdrop-filter: blur(3px);
+            backdrop-filter: blur(5px); /* 배경 흐림 효과 */
             text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
-        /* 4. 기본 텍스트 색상 (흰색 유지 - 제목 등) */
+        /* 4. 기본 텍스트 색상 */
         h1, h2, h3, p, label {
             color: white !important;
             text-align: center;
             font-family: 'Segoe UI', sans-serif;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3); /* 글자 가독성 위해 그림자 추가 */
         }
 
-        /* 5. 입력창 디자인 */
-        /* 겉 박스: 투명 배경 + 흰색 테두리 */
+        /* 5. [핵심] 입력창 투명화 */
+        /* 입력창 겉 테두리 박스 */
         div[data-baseweb="input"] {
-            background-color: rgba(255, 255, 255, 0.2) !important; /* 글자가 검정이라 배경을 아주 살짝 밝게 줌 */
-            border: 1px solid rgba(255, 255, 255, 0.8) !important;
-            border-radius: 5px !important;
+            background-color: transparent !important; /* 배경색 완전 제거 */
+            border: 2px solid white !important;       /* 테두리만 흰색으로 선명하게 */
+            border-radius: 10px !important;
         }
         
-        /* [수정됨] 실제 입력되는 글자색 (검정) */
+        /* 실제 입력되는 텍스트 부분 */
         input[type="password"] {
-            background-color: transparent !important;
-            color: black !important; /* 입력값 검정색 */
-            caret-color: black;      /* 커서 검정색 */
-            font-weight: bold;
+            background-color: transparent !important; /* 배경색 완전 제거 */
+            color: black !important;                  /* 입력 글자는 검정 */
+            caret-color: black;                       /* 커서 색상 검정 */
+            font-weight: 800;                         /* 글자 굵게 */
+            font-size: 18px;
         }
         
-        /* [수정됨] PIN 번호 입력 (placeholder) 색상 (검정) */
+        /* placeholder (안내 문구) */
         ::placeholder {
-            color: black !important; 
-            opacity: 0.7; /* 약간 연한 검정 */
+            color: rgba(0, 0, 0, 0.7) !important; /* 진한 검정색 (투명도 살짝) */
             font-weight: bold;
         }
 
-        /* 6. 버튼 디자인 */
-        /* [수정됨] 버튼 글자색 (검정) */
+        /* 6. [핵심] 버튼 투명화 */
         .stButton > button {
-            background-color: rgba(255, 255, 255, 0.1) !important;
-            color: black !important;  /* 버튼 글씨 검정색 */
-            border: 1px solid rgba(255, 255, 255, 0.8) !important;
-            border-radius: 5px;
-            height: 45px;
-            font-weight: bold;
-            transition: all 0.2s ease-in-out;
+            background-color: transparent !important; /* 배경색 완전 제거 */
+            color: black !important;                  /* 버튼 글자 검정 */
+            border: 2px solid white !important;       /* 테두리 흰색 */
+            border-radius: 10px;
+            height: 50px;
+            font-size: 18px;
+            font-weight: 800;
+            transition: all 0.3s ease;
         }
         
-        /* 버튼 마우스 올렸을 때 */
+        /* 버튼 마우스 올렸을 때 (Hover) */
         .stButton > button:hover {
-            background-color: rgba(255, 255, 255, 0.5) !important; /* 호버 시 배경 좀 더 하얗게 */
+            background-color: rgba(255, 255, 255, 0.3) !important; /* 살짝 흰색 채움 */
             border-color: white !important;
             color: black !important;
+            transform: scale(1.02); /* 살짝 커지는 효과 */
         }
-        
-        /* 에러 메시지 스타일 */
+
+        /* 에러 메시지 */
         .stAlert {
-            background-color: rgba(255, 50, 50, 0.8);
-            color: white;
-            border: none;
+            background-color: rgba(255, 255, 255, 0.8);
+            color: red;
+            border-radius: 10px;
         }
         </style>
         """,
@@ -135,15 +141,14 @@ def check_password():
     with col2:
         # 프로필 아이콘
         st.markdown("<h1 style='font-size: 100px; margin-bottom: 10px;'>👤</h1>", unsafe_allow_html=True)
-        st.markdown("<h3 style='margin-top: 0px; margin-bottom: 30px; font-weight: 300;'>Family Stock</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='margin-top: 0px; margin-bottom: 40px; font-weight: 400; text-shadow: 0 2px 4px rgba(0,0,0,0.5);'>Family Stock</h3>", unsafe_allow_html=True)
         
         with st.form("login_form"):
-            # placeholder="PIN 번호 입력" -> 이 부분이 검정색으로 나옵니다
+            # 라벨 숨김
             password = st.text_input("Password", type="password", placeholder="PIN 번호 입력", label_visibility="collapsed")
             
             st.markdown("<br>", unsafe_allow_html=True)
             
-            # 버튼 글씨("로그인") -> 이 부분이 검정색으로 나옵니다
             submit_btn = st.form_submit_button("로그인")
             
             if submit_btn:
@@ -552,6 +557,7 @@ if st.session_state['analysis_done'] and not st.session_state['result_df'].empty
                         st.success("✅ 현재 주가가 240일 장기 이동평균선 아래에 있습니다. (저점 매수 기회 가능성)")
                     else:
                         st.info("ℹ️ 현재 주가가 240일 이동평균선 위에 있습니다. (추세 상승 중)")
+
 
 
 
