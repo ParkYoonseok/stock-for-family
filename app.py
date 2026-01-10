@@ -314,7 +314,7 @@ if 'result' in st.session_state:
                     # [수정됨] 화면 크기에 맞춰 자동으로 반응하는 차트
                     # figsize=(10, 5)로 줄이고, use_container_width=True 사용
                     # -----------------------------------------------------------
-                    fig, ax = plt.subplots(figsize=(50, 20))
+                    fig, ax = plt.subplots(figsize=(50, 40))
                     
                     ax.plot(df_daily.index, df_daily['Close'], label='주가', color='black', alpha=0.6)
                     
@@ -337,5 +337,6 @@ if 'result' in st.session_state:
                     """)
                 else:
                     st.error("데이터가 없습니다.")
+
 
 
