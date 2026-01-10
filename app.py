@@ -144,7 +144,7 @@ def check_password():
         st.markdown("<h3 style='margin-top: 0px; margin-bottom: 40px; font-weight: 400;'>Family Stock</h3>", unsafe_allow_html=True)
 
         with st.form("login_form"):
-            password = st.text_input("Password", type="password", placeholder="비밀번호 입력", label_visibility="collapsed")
+            password = st.text_input("Password", type="password", placeholder="PIN 번호 입력", label_visibility="collapsed")
 
             st.markdown("<br>", unsafe_allow_html=True)
 
@@ -353,54 +353,72 @@ if 'analysis_done' not in st.session_state:
 # [화면 분기] 분석 전(메인) vs 분석 후(결과)
 # ---------------------------------------------------------
 
-# 1. 분석 전: 대시보드 설명 화면 (휑하지 않게 꾸미기)
+# 1. 분석 전: 대시보드 설명 화면 (디자인 업그레이드)
 if not st.session_state['analysis_done']:
-    st.info("왼쪽 사이드바에서 원하는 조건을 설정하고 **'🚀 조건에 맞는 종목 찾기'** 버튼을 눌러주세요.")
+    # [헤더] 투자 철학 문구
+    st.markdown("### 📉 \"싸게 사서 비싸게 판다.\" 투자의 기본을 지키는 가장 쉬운 방법")
+    st.info("👈 **왼쪽 사이드바**에서 원하는 조건을 설정하고 **'🚀 조건에 맞는 종목 찾기'** 버튼을 눌러주세요.")
 
     st.markdown("---")
     
     # ---------------------------------------------------------
-    # [수정됨] 3단 컬럼 지표 설명 (초간단 요약 버전)
+    # 1. 3대 핵심 지표 (카드형 디자인)
     # ---------------------------------------------------------
+    st.subheader("📊 핵심 투자 지표 3가지")
     col1, col2, col3 = st.columns(3)
     
     with col1:
         with st.container(border=True):
             st.markdown("#### 💰 PER (주가 가성비)")
             st.markdown("""
-            회사가 버는 돈에 비해 주가가 싼지 비싼지 판단
-            * **10배 이하** (수치가 낮을수록 저평가)
+            **"회사가 버는 돈 대비 주가가 싼가?"**
+            * 수치가 낮을수록 저평가
+            * 🎯 목표: **10배 이하**
             """)
             
     with col2:
         with st.container(border=True):
             st.markdown("#### 🏢 PBR (재산 대비 가격)")
             st.markdown("""
-            회사가 가진 재산보다 주가가 싼지 비싼지
-            * **1배 미만** (낮을수록 바겐세일)
+            **"망해도 건질 게 있는 회사인가?"**
+            * 자산 대비 주가가 싼 '바겐세일'
+            * 🎯 목표: **1배 미만**
             """)
             
     with col3:
         with st.container(border=True):
             st.markdown("#### 📈 ROE (돈 버는 실력)")
             st.markdown("""
-            돈을 굴려 몇 % 수익을 내나?
-            * **10% 이상** (높을수록 좋음)
+            **"내 돈으로 얼마나 잘 벌고 있나?"**
+            * 은행 이자보다 높은 수익률인지 확인
+            * 🎯 목표: **10% 이상**
             """)
 
-    st.markdown("") # 여백
+    st.markdown("<br>", unsafe_allow_html=True) # 간격 추가
     
-    with st.container(border=True):
-        st.subheader("💡 이 프로그램의 종목 선정 기준")
-        st.markdown("""
-        1. **튼튼한 덩치:** 시가총액 4,000억 이상
-        2. **활발한 거래:** 거래대금 충분한 종목
-        3. **돈 버는 회사:** 적자 기업 제외
-        4. **외국인 관심:** 외국인 지분율 일정 수준 이상
-        5. **재무 건전성:** 부채비율이 낮은 회사
-        """)
+    # ---------------------------------------------------------
+    # 2. 종목 선정 기준 (가로 아이콘 배치)
+    # ---------------------------------------------------------
+    st.subheader("🛡️ 5단계 안전 필터링")
+    st.caption("아래 5가지 조건을 모두 통과한 튼튼한 기업만 보여드립니다.")
+    
+    c1, c2, c3, c4, c5 = st.columns(5)
+    
+    with c1:
+        st.info("**🏗️ 튼튼한 덩치**\n\n시총 4,000억↑\n(잡주 제외)")
+    with c2:
+        st.info("**💧 활발한 거래**\n\n거래대금 충분\n(환금성 확보)")
+    with c3:
+        st.info("**💰 흑자 기업**\n\n영업이익 > 0\n(적자 기업 OUT)")
+    with c4:
+        st.info("**🌍 외국인 관심**\n\n외인 지분 보유\n(수급 확인)")
+    with c5:
+        st.info("**🛡️ 재무 건전성**\n\n부채비율 200%↓\n(망할 일 없음)")
 
-    st.warning("⚠️ **투자 유의사항**: 이 프로그램은 과거 데이터를 기반으로 종목을 필터링합니다. 최종 투자 결정은 본인의 판단하에 신중하게 내려주세요.")
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # 하단 경고 문구 (스타일링)
+    st.error("⚠️ **투자 유의사항:** 이 프로그램은 과거 데이터를 기반으로 종목을 1차 필터링해주는 도구입니다. 최종 투자는 뉴스와 공시를 확인 후 신중하게 결정하세요.")
 
 
 # 2. 분석 실행 버튼 클릭 시 로직
@@ -555,22 +573,3 @@ if st.session_state['analysis_done'] and not st.session_state['result_df'].empty
                         st.success("✅ 현재 주가가 240일 장기 이동평균선 아래에 있습니다. (저점 매수 기회 가능성)")
                     else:
                         st.info("ℹ️ 현재 주가가 240일 이동평균선 위에 있습니다. (추세 상승 중)")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
