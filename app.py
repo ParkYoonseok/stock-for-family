@@ -22,32 +22,114 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# [기능] 비밀번호 체크
+# [기능] 비밀번호 체크 (윈도우 로그인 스타일)
 # ---------------------------------------------------------
 def check_password():
+    """윈도우 잠금화면 스타일의 로그인"""
     if "authenticated" not in st.session_state:
         st.session_state["authenticated"] = False
 
     if st.session_state["authenticated"]:
         return True
 
-    # 로그인 화면 디자인 개선
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.title("🔒 지인 전용 주식 추천")
-        password = st.text_input("비밀번호를 입력하세요", type="password")
-        
-        if st.button("로그인", use_container_width=True):
-            try:
-                correct_password = st.secrets["FAMILY_PASSWORD"]
-            except:
-                correct_password = "1234" 
+    # -----------------------------------------------------
+    # [CSS] 윈도우 스타일 디자인 주입
+    # -----------------------------------------------------
+    st.markdown(
+        """
+        <style>
+        /* 1. 전체 배경 설정 (윈도우 추천 사진 느낌) */
+        .stApp {
+            background-image: url("https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=3270&auto=format&fit=crop");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
 
-            if password == correct_password:  
-                st.session_state["authenticated"] = True
-                st.rerun()
-            else:
-                st.error("비밀번호가 틀렸습니다.")
+        /* 2. 상단 헤더 숨김 (깔끔하게) */
+        header {visibility: hidden;}
+        
+        /* 3. 로그인 컨테이너 디자인 (유리 효과) */
+        div[data-testid="column"] {
+            background-color: rgba(0, 0, 0, 0.4); /* 검은색 반투명 */
+            padding: 40px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px); /* 블러 효과 */
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        /* 4. 텍스트 색상 (흰색) */
+        h1, h2, h3, p, div, label {
+            color: white !important;
+            text-align: center;
+        }
+
+        /* 5. 입력창 디자인 */
+        .stTextInput > div > div > input {
+            background-color: rgba(255, 255, 255, 0.9);
+            color: black !important;
+            border-radius: 5px;
+            border: none;
+            text-align: center;
+        }
+
+        /* 6. 버튼 디자인 */
+        .stButton > button {
+            background-color: rgba(255, 255, 255, 0.2) !important;
+            color: white !important;
+            border: 1px solid white !important;
+            border-radius: 5px;
+            width: 100%;
+        }
+        .stButton > button:hover {
+            background-color: rgba(255, 255, 255, 0.4) !important;
+            border-color: white !important;
+        }
+        
+        /* 에러 메시지 박스 스타일 */
+        .stAlert {
+            background-color: rgba(255, 0, 0, 0.5);
+            color: white;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # -----------------------------------------------------
+    # [UI] 로그인 화면 구성
+    # -----------------------------------------------------
+    # 수직 여백을 주어 화면 중앙 쯤에 오도록 조정
+    st.markdown("<br><br><br><br><br>", unsafe_allow_html=True)
+    
+    # 좌우 여백을 주어 중앙 컬럼만 사용
+    col1, col2, col3 = st.columns([1.5, 2, 1.5])
+
+    with col2:
+        # 프로필 아이콘 (윈도우 스타일)
+        st.markdown("<h1 style='font-size: 80px; margin-bottom: 0px;'>👤</h1>", unsafe_allow_html=True)
+        st.markdown("<h3 style='margin-top: 0px; margin-bottom: 20px;'>Family Stock</h3>", unsafe_allow_html=True)
+        
+        # 폼을 사용하여 엔터키 입력 지원
+        with st.form("login_form"):
+            password = st.text_input("비밀번호", type="password", placeholder="PIN 번호 입력", label_visibility="collapsed")
+            submit_btn = st.form_submit_button("로그인 →")
+            
+            if submit_btn:
+                try:
+                    correct_password = st.secrets["FAMILY_PASSWORD"]
+                except:
+                    correct_password = "1234"
+
+                if password == correct_password:  
+                    st.session_state["authenticated"] = True
+                    st.rerun()
+                else:
+                    st.error("비밀번호가 올바르지 않습니다.")
+
     return False
 
 if not check_password():
@@ -442,6 +524,7 @@ if st.session_state['analysis_done'] and not st.session_state['result_df'].empty
                         st.success("✅ 현재 주가가 240일 장기 이동평균선 아래에 있습니다. (저점 매수 기회 가능성)")
                     else:
                         st.info("ℹ️ 현재 주가가 240일 이동평균선 위에 있습니다. (추세 상승 중)")
+
 
 
 
