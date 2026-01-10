@@ -31,8 +31,8 @@ def check_password():
     password = st.text_input("비밀번호", type="password")
     
     if st.button("로그인"):
-        # ✅ 여기에 원하는 비밀번호를 설정하세요 (현재: 1234)
-        if password == "1911":  
+        # 🔐 금고(secrets)에서 비밀번호를 꺼내옵니다
+        if password == st.secrets["FAMILY_PASSWORD"]:  
             st.session_state["authenticated"] = True
             st.rerun()  # 화면을 새로고침해서 내용을 보여줌
         else:
@@ -305,3 +305,4 @@ if 'result' in st.session_state:
                 else:
 
                     st.error("데이터가 없습니다.")
+
