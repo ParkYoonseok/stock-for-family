@@ -12,6 +12,7 @@ import platform
 import warnings
 import os
 import matplotlib.font_manager as fm
+import plotly.express as px  # [추가] 시각화 라이브러리 추가
 
 # ---------------------------------------------------------
 # [기능 추가] 비밀번호 체크 함수
@@ -283,6 +284,49 @@ if 'result' in st.session_state:
     st.success(f"**총 {len(df_display)}개의 종목**을 찾았습니다!")
     st.dataframe(df_display, use_container_width=True, hide_index=True)
 
+    # ---------------------------------------------------------
+    # [추가 기능] TreeMap 시각화 (Finviz 스타일)
+    # ---------------------------------------------------------
+    if not df_raw.empty:
+        st.markdown("### 🗺️ 발굴 종목 시장 지도")
+        st.caption("박스 크기는 **시가총액**, 색상은 **등락률**을 의미합니다. (빨강: 상승, 파랑: 하락)")
+
+        # 등락률 파싱 (문자열 % 제거 및 float 변환 처리)
+        def clean_rate(x):
+            try:
+                if isinstance(x, str):
+                    return float(x.replace('%', ''))
+                return float(x)
+            except:
+                return 0.0
+
+        df_raw['CleanRate'] = df_raw['등락률'].apply(clean_rate)
+        
+        # 색상 범위 설정 (0을 기준으로 대칭되게 하여 0은 흰색/회색이 되도록 함)
+        max_abs_val = max(abs(df_raw['CleanRate'].min()), abs(df_raw['CleanRate'].max()), 1.0)
+        
+        # 트리맵 생성
+        fig_map = px.treemap(
+            df_raw,
+            path=[px.Constant("발굴된 종목"), 'Name'], # 계층 구조 생성
+            values='시가총액', # 박스 크기
+            color='CleanRate', # 박스 색상
+            color_continuous_scale='RdBu_r', # 파랑(음수) -> 빨강(양수) (한국 주식 스타일)
+            range_color=[-max_abs_val, max_abs_val], # 0을 중앙으로 설정
+            custom_data=['종가', 'PER', 'PBR', 'ROE'] # 호버 데이터 추가
+        )
+
+        # 텍스트 포맷 설정 (종목명 + 등락률)
+        fig_map.data[0].texttemplate = "<b>%{label}</b><br>%{color:.2f}%"
+        
+        # 툴팁(마우스 올렸을 때) 설정
+        fig_map.update_traces(
+            hovertemplate="<b>%{label}</b><br>💰 시가총액: %{value:,.0f}원<br>📊 등락률: %{color:.2f}%<br>💵 현재가: %{customdata[0]:,}원<br>📈 PER: %{customdata[1]:.2f} / PBR: %{customdata[2]:.2f}"
+        )
+        
+        fig_map.update_layout(margin=dict(t=0, l=0, r=0, b=0), height=500)
+        st.plotly_chart(fig_map, use_container_width=True)
+
     st.markdown("---")
     st.subheader("📈 차트 분석")
     st.caption("아래 목록에서 궁금한 종목을 선택하고 **'차트 보기'** 버튼을 눌러보세요.")
@@ -311,8 +355,7 @@ if 'result' in st.session_state:
                     plt.rcParams['axes.unicode_minus'] = False
                     
                     # -----------------------------------------------------------
-                    # [수정됨] 화면 크기에 맞춰 자동으로 반응하는 차트
-                    # figsize=(10, 5)로 줄이고, use_container_width=True 사용
+                    # [차트 수정] 화면 크기에 반응 (figsize 및 container width 사용)
                     # -----------------------------------------------------------
                     fig, ax = plt.subplots(figsize=(50, 20))
                     
@@ -327,7 +370,6 @@ if 'result' in st.session_state:
                     ax.legend(fontsize=12)
                     ax.grid(True, alpha=0.3)
                     
-                    # 여기가 핵심! 화면 꽉 차게 보여주기
                     st.pyplot(fig, use_container_width=True)
                     
                     st.markdown("""
@@ -337,7 +379,3 @@ if 'result' in st.session_state:
                     """)
                 else:
                     st.error("데이터가 없습니다.")
-
-
-
-
