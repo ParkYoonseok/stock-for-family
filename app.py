@@ -33,6 +33,9 @@ st.set_page_config(
 # ---------------------------------------------------------
 # [기능] 비밀번호 체크 (완전 투명 배경 + 검정 글씨)
 # ---------------------------------------------------------
+# ---------------------------------------------------------
+# [기능] 비밀번호 체크 (강력 투명화 버전)
+# ---------------------------------------------------------
 def check_password():
     """윈도우 잠금화면 스타일의 로그인"""
     if "authenticated" not in st.session_state:
@@ -42,12 +45,12 @@ def check_password():
         return True
 
     # -----------------------------------------------------
-    # [CSS] 완전 투명화(Transparent) 적용
+    # [CSS] 입력창과 버튼의 흰색 배경 강제 제거
     # -----------------------------------------------------
     st.markdown(
         """
         <style>
-        /* 1. 전체 배경 설정 */
+        /* 1. 전체 배경 (고화질 풍경) */
         .stApp {
             background-image: url("https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=3270&auto=format&fit=crop");
             background-size: cover;
@@ -56,73 +59,76 @@ def check_password():
             background-attachment: fixed;
         }
 
-        /* 2. 상단 헤더 숨김 */
+        /* 2. 헤더 숨김 */
         header {visibility: hidden;}
         
-        /* 3. 로그인 컨테이너 (유리 효과) */
+        /* 3. 로그인 컨테이너 (여기는 전체 틀이라 살짝 어둡게 유지하거나 투명하게) */
         div[data-testid="column"] {
-            background-color: rgba(255, 255, 255, 0.1); /* 전체 박스만 아주 살짝 흰색 틴트 */
             padding: 50px;
-            border-radius: 20px;
-            backdrop-filter: blur(5px); /* 배경 흐림 효과 */
             text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
-        /* 4. 기본 텍스트 색상 */
+        /* 4. 텍스트 기본 색상 (흰색) */
         h1, h2, h3, p, label {
             color: white !important;
             text-align: center;
             font-family: 'Segoe UI', sans-serif;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3); /* 글자 가독성 위해 그림자 추가 */
+            text-shadow: 0 2px 5px rgba(0,0,0,0.5); /* 글자 잘 보이게 그림자 */
         }
 
-        /* 5. [핵심] 입력창 투명화 */
-        /* 입력창 겉 테두리 박스 */
+        /* =========================================================
+           [핵심] 입력창 투명화 (흰색 박스 제거)
+           ========================================================= */
+        
+        /* Streamlit 입력창의 가장 바깥쪽 컨테이너 */
         div[data-baseweb="input"] {
-            background-color: transparent !important; /* 배경색 완전 제거 */
-            border: 2px solid white !important;       /* 테두리만 흰색으로 선명하게 */
+            background-color: rgba(255, 255, 255, 0.0) !important; /* 완전 투명 */
+            border: 2px solid white !important;       /* 테두리는 흰색 */
             border-radius: 10px !important;
         }
-        
-        /* 실제 입력되는 텍스트 부분 */
-        input[type="password"] {
-            background-color: transparent !important; /* 배경색 완전 제거 */
-            color: black !important;                  /* 입력 글자는 검정 */
-            caret-color: black;                       /* 커서 색상 검정 */
-            font-weight: 800;                         /* 글자 굵게 */
-            font-size: 18px;
+
+        /* 입력창 내부의 실제 input 태그 */
+        input.st-ae {
+            background-color: transparent !important;
         }
         
-        /* placeholder (안내 문구) */
+        /* 입력되는 글자 색상 (검정) */
+        input[type="password"] {
+            color: black !important;
+            font-weight: 800;
+            caret-color: white; /* 커서는 흰색 */
+        }
+
+        /* Placeholder (PIN 번호 입력) 색상 */
         ::placeholder {
-            color: rgba(0, 0, 0, 0.7) !important; /* 진한 검정색 (투명도 살짝) */
+            color: rgba(0, 0, 0, 0.7) !important; /* 진한 검정 */
             font-weight: bold;
         }
 
-        /* 6. [핵심] 버튼 투명화 */
-        .stButton > button {
-            background-color: transparent !important; /* 배경색 완전 제거 */
-            color: black !important;                  /* 버튼 글자 검정 */
-            border: 2px solid white !important;       /* 테두리 흰색 */
-            border-radius: 10px;
-            height: 50px;
-            font-size: 18px;
-            font-weight: 800;
-            transition: all 0.3s ease;
-        }
+        /* =========================================================
+           [핵심] 버튼 투명화 (흰색 박스 제거)
+           ========================================================= */
         
-        /* 버튼 마우스 올렸을 때 (Hover) */
-        .stButton > button:hover {
-            background-color: rgba(255, 255, 255, 0.3) !important; /* 살짝 흰색 채움 */
-            border-color: white !important;
-            color: black !important;
-            transform: scale(1.02); /* 살짝 커지는 효과 */
+        /* 버튼 스타일 강제 적용 */
+        div[data-testid="stFormSubmitButton"] > button {
+            background-color: rgba(255, 255, 255, 0.0) !important; /* 완전 투명 */
+            color: black !important;                 /* 글자 검정 */
+            border: 2px solid white !important;      /* 테두리 흰색 */
+            border-radius: 10px;
+            font-weight: 800;
+            transition: all 0.3s;
         }
 
+        /* 버튼 마우스 올렸을 때 (Hover) */
+        div[data-testid="stFormSubmitButton"] > button:hover {
+            background-color: rgba(255, 255, 255, 0.3) !important; /* 살짝 흰색 틴트 */
+            border-color: white !important;
+            color: black !important;
+        }
+        
         /* 에러 메시지 */
         .stAlert {
-            background-color: rgba(255, 255, 255, 0.8);
+            background-color: rgba(255, 255, 255, 0.9);
             color: red;
             border-radius: 10px;
         }
@@ -132,7 +138,7 @@ def check_password():
     )
 
     # -----------------------------------------------------
-    # [UI] 로그인 화면 구성
+    # [UI] 화면 구성
     # -----------------------------------------------------
     st.markdown("<br><br><br><br><br>", unsafe_allow_html=True)
     
@@ -141,10 +147,9 @@ def check_password():
     with col2:
         # 프로필 아이콘
         st.markdown("<h1 style='font-size: 100px; margin-bottom: 10px;'>👤</h1>", unsafe_allow_html=True)
-        st.markdown("<h3 style='margin-top: 0px; margin-bottom: 40px; font-weight: 400; text-shadow: 0 2px 4px rgba(0,0,0,0.5);'>Family Stock</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='margin-top: 0px; margin-bottom: 40px; font-weight: 400;'>Family Stock</h3>", unsafe_allow_html=True)
         
         with st.form("login_form"):
-            # 라벨 숨김
             password = st.text_input("Password", type="password", placeholder="PIN 번호 입력", label_visibility="collapsed")
             
             st.markdown("<br>", unsafe_allow_html=True)
@@ -557,6 +562,7 @@ if st.session_state['analysis_done'] and not st.session_state['result_df'].empty
                         st.success("✅ 현재 주가가 240일 장기 이동평균선 아래에 있습니다. (저점 매수 기회 가능성)")
                     else:
                         st.info("ℹ️ 현재 주가가 240일 이동평균선 위에 있습니다. (추세 상승 중)")
+
 
 
 
