@@ -229,29 +229,84 @@ with st.sidebar:
 # [메인 화면]
 # =========================================================
 st.title("💎 저평가 우량주 발굴기")
-st.markdown(f"""
-**설정된 조건:** PER **{in_max_per}**이하, PBR **{in_max_pbr}**이하, ROE **{in_min_roe}%**이상인 
-싸고 튼튼한 기업을 찾습니다.
-""")
 
-# 세션 상태 초기화 (결과 저장용)
+# 세션 상태 초기화
 if 'result_df' not in st.session_state:
     st.session_state['result_df'] = pd.DataFrame()
 if 'analysis_done' not in st.session_state:
     st.session_state['analysis_done'] = False
 
-# [분석 로직 실행]
+# ---------------------------------------------------------
+# [화면 분기] 분석 전(메인) vs 분석 후(결과)
+# ---------------------------------------------------------
+
+# 1. 분석 전: 대시보드 설명 화면 (휑하지 않게 꾸미기)
+if not st.session_state['analysis_done']:
+    st.markdown("### 👋 환영합니다! 투자의 정석대로 종목을 찾아보세요.")
+    st.info("왼쪽 사이드바에서 원하는 조건을 설정하고 **'🚀 조건에 맞는 종목 찾기'** 버튼을 눌러주세요.")
+
+    st.markdown("---")
+    
+    # 3단 컬럼으로 지표 설명 카드 만들기
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        with st.container(border=True):
+            st.markdown("### 💰 PER (주가수익비율)")
+            st.markdown("""
+            **"본전 뽑는데 걸리는 시간"**
+            * 수치가 낮을수록 저평가
+            * **10배 이하**면 훌륭해요!
+            * 회사가 버는 돈에 비해 주가가 싼지 판단합니다.
+            """)
+            
+    with col2:
+        with st.container(border=True):
+            st.markdown("### 🏢 PBR (주가순자산비율)")
+            st.markdown("""
+            **"망해도 남는게 있는가"**
+            * **1배 미만**이면 바겐세일 중!
+            * 회사의 재산(청산가치)보다 주가가 싼 상태입니다.
+            * 안전마진을 확보하는 핵심 지표.
+            """)
+            
+    with col3:
+        with st.container(border=True):
+            st.markdown("### 📈 ROE (자기자본이익률)")
+            st.markdown("""
+            **"내 돈으로 얼마나 벌었나"**
+            * 수치가 높을수록 고수익
+            * **10% 이상**이면 준수해요!
+            * 은행 이자보다 훨씬 높은 수익률을 내는 기업을 찾으세요.
+            """)
+
+    st.markdown("") # 여백
+    
+    with st.container(border=True):
+        st.subheader("💡 이 프로그램의 종목 선정 기준")
+        st.markdown("""
+        1. **튼튼한 덩치:** 시가총액 4,000억 이상 (잡주 제외)
+        2. **활발한 거래:** 거래대금 충분한 종목
+        3. **돈 버는 회사:** 적자 기업은 무조건 제외
+        4. **외국인 관심:** 외국인 지분율 일정 수준 이상
+        5. **재무 건전성:** 부채비율 200% 이하 (망할 걱정 없는 회사)
+        """)
+
+    st.warning("⚠️ **투자 유의사항**: 이 프로그램은 과거 데이터를 기반으로 종목을 필터링합니다. 최종 투자 결정은 본인의 판단하에 신중하게 내려주세요.")
+
+
+# 2. 분석 실행 버튼 클릭 시 로직
 if run_btn:
     # 1. 전체 데이터 수집
     df_all = get_naver_market_data()
 
     # 2. 1차 필터링
-    cond_cap = df_all['시가총액'] >= 400000000000 # 시총 4000억 이상 (고정)
+    cond_cap = df_all['시가총액'] >= 400000000000 
     cond_amt = df_all['거래대금'] >= in_min_amt
     cond_pbr = (df_all['PBR'] <= in_max_pbr) & (df_all['PBR'] > 0)
     cond_per = (df_all['PER'] <= in_max_per) & (df_all['PER'] > 0)
     cond_roe = df_all['ROE'] >= in_min_roe
-    cond_op = df_all['영업이익'] > 0 # 적자 기업 제외
+    cond_op = df_all['영업이익'] > 0 
     cond_frgn = df_all['외국인비율'] >= in_min_foreign
     cond_nm = ~df_all['Name'].str.contains(in_exclude)
 
@@ -265,18 +320,20 @@ if run_btn:
         
         st.session_state['result_df'] = df_final
         st.session_state['analysis_done'] = True
+        st.rerun() # 화면 갱신해서 결과 보여주기
     else:
         st.session_state['result_df'] = pd.DataFrame()
         st.session_state['analysis_done'] = True
         st.warning("조건을 만족하는 종목이 없습니다. 필터를 완화해보세요.")
 
-# =========================================================
-# [결과 리포트] 탭 구조로 변경
-# =========================================================
+
+# 3. 분석 후: 결과 리포트 화면
 if st.session_state['analysis_done'] and not st.session_state['result_df'].empty:
     df_res = st.session_state['result_df']
     
-    # 상단 요약 지표 (Dashboard style)
+    st.markdown(f"### 🎯 분석 결과: 총 {len(df_res)}개 종목 발견")
+    
+    # 상단 요약 지표
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("발굴된 종목 수", f"{len(df_res)}개")
     m2.metric("평균 PER", f"{df_res['PER'].mean():.2f}배")
@@ -288,13 +345,10 @@ if st.session_state['analysis_done'] and not st.session_state['result_df'].empty
     # 탭 구성
     tab1, tab2, tab3 = st.tabs(["📊 종목 리스트", "🗺️ 시장 지도 (TreeMap)", "📉 상세 차트 분석"])
 
-    # ---------------------------------------------------------
-    # TAB 1: 데이터프레임 리스트
-    # ---------------------------------------------------------
+    # TAB 1: 데이터프레임
     with tab1:
         st.subheader("📋 선별된 종목 목록")
         
-        # 표시용 데이터 생성
         df_disp = df_res.copy()
         df_disp['시가총액'] = df_disp['시가총액'] / 100000000 
         df_disp['거래대금'] = df_disp['거래대금'] / 100000000 
@@ -307,7 +361,6 @@ if st.session_state['analysis_done'] and not st.session_state['result_df'].empty
         
         st.dataframe(df_disp, use_container_width=True, hide_index=True)
         
-        # [CSV 다운로드 버튼]
         csv = df_disp.to_csv(index=False).encode('utf-8-sig')
         st.download_button(
             label="💾 엑셀(CSV)로 다운로드",
@@ -316,14 +369,11 @@ if st.session_state['analysis_done'] and not st.session_state['result_df'].empty
             mime='text/csv',
         )
 
-    # ---------------------------------------------------------
-    # TAB 2: 트리맵 (시장 지도)
-    # ---------------------------------------------------------
+    # TAB 2: 트리맵
     with tab2:
         st.subheader("🗺️ 한눈에 보는 시장 지도")
         st.caption("박스 크기: 시가총액 / 색상: 등락률 (빨강:상승, 파랑:하락)")
         
-        # 등락률 클리닝
         def clean_rate_v2(x):
             try:
                 if pd.isna(x) or x == '': return 0.0
@@ -349,9 +399,7 @@ if st.session_state['analysis_done'] and not st.session_state['result_df'].empty
         
         st.plotly_chart(fig_map, use_container_width=True)
 
-    # ---------------------------------------------------------
     # TAB 3: 상세 차트
-    # ---------------------------------------------------------
     with tab3:
         st.subheader("📉 종목별 상세 차트")
         col_sel, col_empty = st.columns([1, 2])
@@ -367,7 +415,6 @@ if st.session_state['analysis_done'] and not st.session_state['result_df'].empty
                 df_chart = get_detailed_daily_data(code)
                 
                 if not df_chart.empty:
-                    # 폰트 설정
                     font_path = 'NanumGothic.ttf'
                     if not os.path.exists(font_path):
                         url = 'https://github.com/google/fonts/raw/main/ofl/nanumgothic/NanumGothic-Regular.ttf'
@@ -378,8 +425,7 @@ if st.session_state['analysis_done'] and not st.session_state['result_df'].empty
                     plt.rc('font', family=font_prop.get_name())
                     plt.rcParams['axes.unicode_minus'] = False
                     
-                    # 그래프 그리기
-                    fig, ax = plt.subplots(figsize=(12, 6)) # 화면 비율 조정
+                    fig, ax = plt.subplots(figsize=(12, 6))
                     ax.plot(df_chart.index, df_chart['Close'], color='black', alpha=0.6, label='주가')
                     
                     ma120 = df_chart['Close'].rolling(120).mean()
@@ -394,7 +440,6 @@ if st.session_state['analysis_done'] and not st.session_state['result_df'].empty
                     
                     st.pyplot(fig, use_container_width=True)
                     
-                    # 간단 코멘트
                     curr_price = df_chart['Close'].iloc[-1]
                     ma240_val = ma240.iloc[-1]
                     
