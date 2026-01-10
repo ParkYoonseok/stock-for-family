@@ -275,11 +275,18 @@ if 'result' in st.session_state:
                 df_daily = get_detailed_daily_data(code)
                 
                 if not df_daily.empty:
-                    if platform.system() == 'Windows':
-                        font_path = "c:/Windows/Fonts/malgun.ttf"
-                        font_name = font_manager.FontProperties(fname=font_path).get_name()
-                        rc('font', family=font_name)
-                    plt.rcParams['axes.unicode_minus'] = False 
+                    import os
+                    import matplotlib.font_manager as fm
+                    font_filename = 'NanumGothic.ttf'
+
+                    if not os.path.exists(font_filename):
+                        url = 'https://github.com/google/fonts/raw/main/ofl/nanumgothic/NanumGothic-Regular.ttf'
+                        with open(font_filename, 'wb') as f:
+                            f.write(requests.get(url).content)
+                    fm.fontManager.addfont(font_filename)
+                    font_name = fm.FontProperties(fname=font_filename).get_name()
+                    plt.rc('font', family=font_name)
+                    plt.rcParams['axes.unicode_minus'] = False
                     
                     fig, ax = plt.subplots(figsize=(12, 6))
                     ax.plot(df_daily.index, df_daily['Close'], label='주가', color='black', alpha=0.6)
@@ -305,6 +312,7 @@ if 'result' in st.session_state:
                 else:
 
                     st.error("데이터가 없습니다.")
+
 
 
 
