@@ -22,7 +22,7 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# [기능] 비밀번호 체크 (완벽한 투명화 버전)
+# [기능] 비밀번호 체크 (투명 배경 + 흰색 글자 + 폰트 통일)
 # ---------------------------------------------------------
 def check_password():
     """윈도우 잠금화면 스타일의 로그인"""
@@ -33,7 +33,7 @@ def check_password():
         return True
 
     # -----------------------------------------------------
-    # [CSS] 입력창/버튼 배경 완전 제거 + 테두리/글자색 설정
+    # [CSS] 스타일 정의
     # -----------------------------------------------------
     st.markdown(
         """
@@ -49,26 +49,26 @@ def check_password():
 
         /* 2. 헤더 숨김 */
         header {visibility: hidden;}
-        
+
         /* 3. 로그인 컨테이너 */
         div[data-testid="column"] {
             padding: 50px;
             text-align: center;
         }
 
-        /* 4. 기본 텍스트 색상 (흰색) */
+        /* 4. 기본 텍스트 색상 (흰색, 폰트 통일) */
         h1, h2, h3, p, label {
             color: white !important;
             text-align: center;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif !important;
             text-shadow: 0 2px 5px rgba(0,0,0,0.5);
         }
 
         /* =========================================================
-           [핵심] 입력창 스타일 (완전 투명 + 흰색 테두리 + 검정 글씨)
+           [핵심] 입력창 스타일 (완전 투명 + 흰색 테두리 + 흰색 글씨)
            ========================================================= */
-        
-        /* 1) 입력창의 가장 바깥쪽 컨테이너 (여기가 흰색 배경의 원인) */
+
+        /* 1) 입력창의 가장 바깥쪽 컨테이너 */
         div[data-baseweb="base-input"] {
             background-color: transparent !important; /* 배경 투명 */
             border: 2px solid white !important;       /* 테두리 흰색 */
@@ -77,36 +77,39 @@ def check_password():
 
         /* 2) 그 안쪽의 input 컨테이너 */
         div[data-baseweb="input"] {
-            background-color: transparent !important; 
+            background-color: transparent !important;
         }
 
-        /* 3) 실제 글자가 입력되는 input 태그 */
+        /* 3) 실제 글자가 입력되는 input 태그 (흰색, 폰트 통일) */
         input[type="password"] {
             background-color: transparent !important;
-            color: black !important;        /* 입력 글자 검정 */
+            color: white !important;        /* 입력 글자 흰색 */
             caret-color: white !important;  /* 커서 흰색 */
             font-weight: 800;               /* 글자 굵게 */
             font-size: 18px;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif !important;
         }
 
-        /* 4) Placeholder (안내 문구) 색상 */
+        /* 4) Placeholder (안내 문구) 색상 (흰색, 폰트 통일) */
         ::placeholder {
-            color: rgba(0, 0, 0, 0.7) !important; /* 진한 검정 */
+            color: rgba(255, 255, 255, 0.7) !important; /* 흰색 (약간 투명) */
             font-weight: bold;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif !important;
         }
 
         /* =========================================================
-           [핵심] 버튼 스타일 (완전 투명 + 흰색 테두리 + 검정 글씨)
+           [핵심] 버튼 스타일 (완전 투명 + 흰색 테두리 + 흰색 글씨)
            ========================================================= */
-        
+
         div[data-testid="stFormSubmitButton"] > button {
             background-color: transparent !important; /* 배경 투명 */
-            color: black !important;                  /* 글자 검정 */
+            color: white !important;                  /* 글자 흰색 */
             border: 2px solid white !important;       /* 테두리 흰색 */
             border-radius: 10px;
             height: 50px;
             font-size: 18px;
             font-weight: 800;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif !important;
             transition: all 0.3s;
         }
 
@@ -114,9 +117,9 @@ def check_password():
         div[data-testid="stFormSubmitButton"] > button:hover {
             background-color: rgba(255, 255, 255, 0.3) !important;
             border-color: white !important;
-            color: black !important;
+            color: white !important;
         }
-        
+
         /* 에러 메시지 */
         .stAlert {
             background-color: rgba(255, 255, 255, 0.9);
@@ -132,28 +135,28 @@ def check_password():
     # [UI] 화면 구성
     # -----------------------------------------------------
     st.markdown("<br><br><br><br><br>", unsafe_allow_html=True)
-    
+
     col1, col2, col3 = st.columns([1.5, 2, 1.5])
 
     with col2:
         # 프로필 아이콘
         st.markdown("<h1 style='font-size: 100px; margin-bottom: 10px;'>👤</h1>", unsafe_allow_html=True)
         st.markdown("<h3 style='margin-top: 0px; margin-bottom: 40px; font-weight: 400;'>Family Stock</h3>", unsafe_allow_html=True)
-        
+
         with st.form("login_form"):
             password = st.text_input("Password", type="password", placeholder="PIN 번호 입력", label_visibility="collapsed")
-            
+
             st.markdown("<br>", unsafe_allow_html=True)
-            
+
             submit_btn = st.form_submit_button("로그인")
-            
+
             if submit_btn:
                 try:
                     correct_password = st.secrets["FAMILY_PASSWORD"]
                 except:
                     correct_password = "1234"
 
-                if password == correct_password:  
+                if password == correct_password:
                     st.session_state["authenticated"] = True
                     st.rerun()
                 else:
@@ -553,6 +556,7 @@ if st.session_state['analysis_done'] and not st.session_state['result_df'].empty
                         st.success("✅ 현재 주가가 240일 장기 이동평균선 아래에 있습니다. (저점 매수 기회 가능성)")
                     else:
                         st.info("ℹ️ 현재 주가가 240일 이동평균선 위에 있습니다. (추세 상승 중)")
+
 
 
 
