@@ -32,7 +32,7 @@ def check_password():
     
     if st.button("로그인"):
         # ✅ 여기에 원하는 비밀번호를 설정하세요 (현재: 1234)
-        if password == "1234":  
+        if password == "1911":  
             st.session_state["authenticated"] = True
             st.rerun()  # 화면을 새로고침해서 내용을 보여줌
         else:
@@ -303,4 +303,5 @@ if 'result' in st.session_state:
                     * 빨간색 점선(240일선)은 1년 평균 가격으로, 장기적인 바닥을 확인하는 데 도움이 됩니다.
                     """)
                 else:
+
                     st.error("데이터가 없습니다.")
