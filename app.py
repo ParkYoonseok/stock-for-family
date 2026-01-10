@@ -15,7 +15,7 @@ import os
 # [설정] 페이지 기본 설정 (가장 위에 있어야 함)
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="지인 전용 주식 비서", 
+    page_title="지인 전용 주식 추천", 
     page_icon="💎", 
     layout="wide",
     initial_sidebar_state="expanded"
@@ -34,8 +34,7 @@ def check_password():
     # 로그인 화면 디자인 개선
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.title("🔒 지인 전용 주식 비서")
-        st.markdown("관계자 외 출입금지 구역입니다.")
+        st.title("🔒 지인 전용 주식 추천")
         password = st.text_input("비밀번호를 입력하세요", type="password")
         
         if st.button("로그인", use_container_width=True):
@@ -60,7 +59,7 @@ if not check_password():
 @st.cache_data(ttl=3600) # 1시간 캐싱
 def get_naver_market_data():
     # 진행 상황 표시 커스텀
-    progress_text = "전체 시장 데이터를 스캔하고 있습니다... (약 1~2분 소요)"
+    progress_text = "전체 시장 데이터를 스캔하고 있습니다..."
     my_bar = st.progress(0, text=progress_text)
     
     session = requests.Session()
@@ -256,27 +255,27 @@ if not st.session_state['analysis_done']:
         with st.container(border=True):
             st.markdown("### 💰 PER (주가수익비율)")
             st.markdown("""
-            * **📌 정의**: 주가가 1주당 순이익의 몇 배인지 나타내는 지표입니다.
-            * **💡 의미**: 내가 투자한 원금을 회수하는 데 걸리는 시간과 비슷합니다. 수치가 낮을수록 저평가 상태입니다.
-            * **✅ 추천**: 보통 **10배 이하**면 저평가로 봅니다. 동종 업계 평균보다 낮으면 훌륭합니다!
+            주가가 1주당 순이익의 몇 배인지 나타내는 지표
+            * 내가 투자한 원금을 회수하는 데 걸리는 시간과 비슷합니다. 수치가 낮을수록 저평가 상태입니다.
+            * 보통 **10배 이하**면 저평가로 봅니다.
             """)
             
     with col2:
         with st.container(border=True):
             st.markdown("### 🏢 PBR (주가순자산비율)")
             st.markdown("""
-            * **📌 정의**: 회사 자산(자본) 대비 주가가 몇 배인지 나타내는 지표입니다.
-            * **💡 의미**: 회사가 망해서 자산을 다 팔았을 때 주주에게 얼마나 돌아가는지를 보여줍니다.
-            * **✅ 추천**: **1배 미만**이면 '바겐세일' 중입니다. 회사의 자산 가치보다 주가가 싸다는 뜻이라 안전합니다.
+            회사 자산 대비 주가가 몇 배인지 나타내는 지표
+            * 회사가 망해서 자산을 다 팔았을 때 주주에게 얼마나 돌아가는지를 보여줍니다.
+            * **1배 미만**이면 '바겐세일' 중입니다. 회사의 자산 가치보다 주가가 싸다는 뜻이라 안전합니다.
             """)
             
     with col3:
         with st.container(border=True):
             st.markdown("### 📈 ROE (자기자본이익률)")
             st.markdown("""
-            * **📌 정의**: 투입한 자기자본(주주들의 돈) 대비 이익을 얼마나 냈는지 보여줍니다.
-            * **💡 의미**: 경영진이 주주의 돈을 얼마나 잘 굴리는지 보여주는 '성적표'입니다. 은행 이자율과 비교해보세요.
-            * **✅ 추천**: **10% 이상**을 꾸준히 유지하는 기업이 좋습니다. 돈을 복리로 불려주는 알짜 기업입니다.
+            투입한 자기자본(주주들의 돈) 대비 이익을 얼마나 냈는지 보여주는 지표
+            * 경영진이 주주의 돈을 얼마나 잘 굴리는지 보여주는 '성적표'입니다. 은행 이자율과 비교해보세요.
+            * **10% 이상**을 꾸준히 유지하는 기업이 좋습니다.
             """)
 
     st.markdown("") # 여백
@@ -446,4 +445,5 @@ if st.session_state['analysis_done'] and not st.session_state['result_df'].empty
                         st.success("✅ 현재 주가가 240일 장기 이동평균선 아래에 있습니다. (저점 매수 기회 가능성)")
                     else:
                         st.info("ℹ️ 현재 주가가 240일 이동평균선 위에 있습니다. (추세 상승 중)")
+
 
