@@ -12,7 +12,7 @@ import platform
 import warnings
 import os
 import matplotlib.font_manager as fm
-import plotly.express as px  # [추가] 시각화 라이브러리 추가
+import plotly.express as px
 
 # ---------------------------------------------------------
 # [기능 추가] 비밀번호 체크 함수
@@ -223,7 +223,6 @@ def get_detailed_daily_data(ticker, days=1825):
 # [UI 구성]
 # =========================================================
 
-# 버튼 스타일 설정 (파란색)
 st.markdown("""
     <style>
     div.stButton > button[kind="primary"] {
@@ -285,43 +284,48 @@ if 'result' in st.session_state:
     st.dataframe(df_display, use_container_width=True, hide_index=True)
 
     # ---------------------------------------------------------
-    # [추가 기능] TreeMap 시각화 (Finviz 스타일)
+    # [수정됨] TreeMap 시각화 (데이터 클리닝 강화)
     # ---------------------------------------------------------
     if not df_raw.empty:
-        st.markdown("### 🗺️ 발굴 종목 시장 지도")
         st.caption("박스 크기는 **시가총액**, 색상은 **등락률**을 의미합니다. (빨강: 상승, 파랑: 하락)")
 
-        # 등락률 파싱 (문자열 % 제거 및 float 변환 처리)
-        def clean_rate(x):
+        # [핵심 수정] 등락률을 더 강력하게 숫자로 변환하는 함수
+        def clean_rate_v2(x):
             try:
-                if isinstance(x, str):
-                    return float(x.replace('%', ''))
-                return float(x)
+                # 1. 값이 없으면 0.0 반환
+                if pd.isna(x) or x == '':
+                    return 0.0
+                
+                # 2. 문자열로 변환 후 공백, %, + 기호 제거
+                s_val = str(x).strip().replace('%', '').replace('+', '')
+                
+                # 3. 숫자로 변환
+                return float(s_val)
             except:
                 return 0.0
 
-        df_raw['CleanRate'] = df_raw['등락률'].apply(clean_rate)
+        # 데이터 변환 적용
+        df_raw['CleanRate'] = df_raw['등락률'].apply(clean_rate_v2).fillna(0.0)
         
-        # 색상 범위 설정 (0을 기준으로 대칭되게 하여 0은 흰색/회색이 되도록 함)
+        # 색상 범위 설정 (0을 기준으로 대칭)
         max_abs_val = max(abs(df_raw['CleanRate'].min()), abs(df_raw['CleanRate'].max()), 1.0)
         
         # 트리맵 생성
         fig_map = px.treemap(
             df_raw,
-            path=[px.Constant("발굴된 종목"), 'Name'], # 계층 구조 생성
-            values='시가총액', # 박스 크기
-            color='CleanRate', # 박스 색상
-            color_continuous_scale='RdBu_r', # 파랑(음수) -> 빨강(양수) (한국 주식 스타일)
-            range_color=[-max_abs_val, max_abs_val], # 0을 중앙으로 설정
-            custom_data=['종가', 'PER', 'PBR', 'ROE'] # 호버 데이터 추가
+            path=[px.Constant("발굴된 종목"), 'Name'], 
+            values='시가총액',
+            color='CleanRate', 
+            color_continuous_scale='RdBu_r', 
+            range_color=[-max_abs_val, max_abs_val],
+            custom_data=['종가', 'PER', 'PBR', 'ROE', 'CleanRate'] # CleanRate 추가
         )
 
-        # 텍스트 포맷 설정 (종목명 + 등락률)
-        fig_map.data[0].texttemplate = "<b>%{label}</b><br>%{color:.2f}%"
+        # 텍스트 포맷 설정 (NaN이 안 뜨게 customdata 사용)
+        fig_map.data[0].texttemplate = "<b>%{label}</b><br>%{customdata[4]:.2f}%"
         
-        # 툴팁(마우스 올렸을 때) 설정
         fig_map.update_traces(
-            hovertemplate="<b>%{label}</b><br>💰 시가총액: %{value:,.0f}원<br>📊 등락률: %{color:.2f}%<br>💵 현재가: %{customdata[0]:,}원<br>📈 PER: %{customdata[1]:.2f} / PBR: %{customdata[2]:.2f}"
+            hovertemplate="<b>%{label}</b><br>💰 시가총액: %{value:,.0f}원<br>📊 등락률: %{customdata[4]:.2f}%<br>💵 현재가: %{customdata[0]:,}원<br>📈 PER: %{customdata[1]:.2f} / PBR: %{customdata[2]:.2f}"
         )
         
         fig_map.update_layout(margin=dict(t=0, l=0, r=0, b=0), height=500)
@@ -354,9 +358,6 @@ if 'result' in st.session_state:
                     plt.rc('font', family=font_name)
                     plt.rcParams['axes.unicode_minus'] = False
                     
-                    # -----------------------------------------------------------
-                    # [차트 수정] 화면 크기에 반응 (figsize 및 container width 사용)
-                    # -----------------------------------------------------------
                     fig, ax = plt.subplots(figsize=(50, 20))
                     
                     ax.plot(df_daily.index, df_daily['Close'], label='주가', color='black', alpha=0.6)
