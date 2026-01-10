@@ -22,7 +22,7 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# [기능] 비밀번호 체크 (윈도우 로그인 스타일 - 버튼 수정)
+# [기능] 비밀번호 체크 (투명 배경 & 테두리 스타일)
 # ---------------------------------------------------------
 def check_password():
     """윈도우 잠금화면 스타일의 로그인"""
@@ -33,12 +33,12 @@ def check_password():
         return True
 
     # -----------------------------------------------------
-    # [CSS] 윈도우 스타일 디자인 주입 (버튼 색상 수정됨)
+    # [CSS] 투명하고 심플한 디자인 적용
     # -----------------------------------------------------
     st.markdown(
         """
         <style>
-        /* 1. 전체 배경 설정 (윈도우 추천 사진 느낌) */
+        /* 1. 전체 배경 설정 */
         .stApp {
             background-image: url("https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=3270&auto=format&fit=crop");
             background-size: cover;
@@ -47,52 +47,58 @@ def check_password():
             background-attachment: fixed;
         }
 
-        /* 2. 상단 헤더 숨김 (깔끔하게) */
+        /* 2. 상단 헤더 숨김 */
         header {visibility: hidden;}
         
-        /* 3. 로그인 컨테이너 디자인 (유리 효과) */
+        /* 3. 로그인 컨테이너 (유리 효과 유지) */
         div[data-testid="column"] {
-            background-color: rgba(0, 0, 0, 0.4); /* 검은색 반투명 */
+            background-color: rgba(0, 0, 0, 0.3); /* 더 투명하게 */
             padding: 40px;
             border-radius: 15px;
-            backdrop-filter: blur(10px); /* 블러 효과 */
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
             text-align: center;
         }
 
-        /* 4. 텍스트 색상 (흰색) */
+        /* 4. 기본 텍스트 색상 (흰색) */
         h1, h2, h3, p, div, label {
             color: white !important;
             text-align: center;
         }
 
-        /* 5. 입력창 디자인 */
+        /* 5. 입력창 디자인 (투명 배경 + 흰색 테두리) */
         .stTextInput > div > div > input {
-            background-color: rgba(255, 255, 255, 0.9);
-            color: black !important;
+            background-color: transparent !important; /* 배경 투명 */
+            color: white !important;                 /* 글씨 흰색 */
+            border: 1px solid white !important;      /* 테두리 흰색 */
             border-radius: 5px;
-            border: none;
             text-align: center;
         }
+        /* 입력창 플레이스홀더 색상 조정 */
+        ::placeholder {
+            color: rgba(255, 255, 255, 0.7) !important;
+        }
 
-        /* 6. 버튼 디자인 (수정됨: 글씨색과 테두리색을 검은색으로 변경) */
+        /* 6. 버튼 디자인 (투명 배경 + 흰색 테두리) */
         .stButton > button {
-            background-color: rgba(255, 255, 255, 0.8) !important;
-            color: black !important;
-            border: 1px solid black !important;
+            background-color: transparent !important; /* 배경 투명 */
+            color: white !important;                  /* 글씨 흰색 */
+            border: 1px solid white !important;       /* 테두리 흰색 */
             border-radius: 5px;
             width: 100%;
+            transition: all 0.3s ease;
         }
+        /* 마우스 올렸을 때 효과 (살짝 밝게) */
         .stButton > button:hover {
-            background-color: rgba(255, 255, 255, 1.0) !important;
-            border-color: black !important;
+            background-color: rgba(255, 255, 255, 0.2) !important;
+            border-color: white !important;
+            color: white !important;
         }
         
-        /* 에러 메시지 박스 스타일 */
+        /* 에러 메시지 스타일 */
         .stAlert {
             background-color: rgba(255, 0, 0, 0.5);
             color: white;
+            border: none;
         }
         </style>
         """,
@@ -102,18 +108,15 @@ def check_password():
     # -----------------------------------------------------
     # [UI] 로그인 화면 구성
     # -----------------------------------------------------
-    # 수직 여백을 주어 화면 중앙 쯤에 오도록 조정
     st.markdown("<br><br><br><br><br>", unsafe_allow_html=True)
     
-    # 좌우 여백을 주어 중앙 컬럼만 사용
     col1, col2, col3 = st.columns([1.5, 2, 1.5])
 
     with col2:
-        # 프로필 아이콘 (윈도우 스타일)
+        # 프로필 아이콘
         st.markdown("<h1 style='font-size: 80px; margin-bottom: 0px;'>👤</h1>", unsafe_allow_html=True)
         st.markdown("<h3 style='margin-top: 0px; margin-bottom: 20px;'>Family Stock</h3>", unsafe_allow_html=True)
         
-        # 폼을 사용하여 엔터키 입력 지원
         with st.form("login_form"):
             password = st.text_input("비밀번호", type="password", placeholder="PIN 번호 입력", label_visibility="collapsed")
             submit_btn = st.form_submit_button("로그인 →")
@@ -131,7 +134,6 @@ def check_password():
                     st.error("비밀번호가 올바르지 않습니다.")
 
     return False
-
 if not check_password():
     st.stop()
 
@@ -524,6 +526,7 @@ if st.session_state['analysis_done'] and not st.session_state['result_df'].empty
                         st.success("✅ 현재 주가가 240일 장기 이동평균선 아래에 있습니다. (저점 매수 기회 가능성)")
                     else:
                         st.info("ℹ️ 현재 주가가 240일 이동평균선 위에 있습니다. (추세 상승 중)")
+
 
 
 
