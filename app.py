@@ -7,84 +7,61 @@ import re
 import time
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
-from matplotlib import font_manager, rc
-import platform
-import warnings
-import os
 import matplotlib.font_manager as fm
 import plotly.express as px
+import os
 
 # ---------------------------------------------------------
-# [기능 추가] 비밀번호 체크 함수
+# [설정] 페이지 기본 설정 (가장 위에 있어야 함)
+# ---------------------------------------------------------
+st.set_page_config(
+    page_title="지인 전용 주식 비서", 
+    page_icon="💎", 
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# ---------------------------------------------------------
+# [기능] 비밀번호 체크
 # ---------------------------------------------------------
 def check_password():
-    """비밀번호가 맞는지 확인하는 함수"""
     if "authenticated" not in st.session_state:
         st.session_state["authenticated"] = False
 
     if st.session_state["authenticated"]:
         return True
 
-    st.title("🔒 지인 전용 주식 비서")
-    st.write("비밀번호를 입력해주세요.")
-    
-    password = st.text_input("비밀번호", type="password")
-    
-    if st.button("로그인"):
-        try:
-            correct_password = st.secrets["FAMILY_PASSWORD"]
-        except:
-            correct_password = "1234" # secrets 설정 안되어있으면 기본값 1234
+    # 로그인 화면 디자인 개선
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.title("🔒 지인 전용 주식 비서")
+        st.markdown("관계자 외 출입금지 구역입니다.")
+        password = st.text_input("비밀번호를 입력하세요", type="password")
+        
+        if st.button("로그인", use_container_width=True):
+            try:
+                correct_password = st.secrets["FAMILY_PASSWORD"]
+            except:
+                correct_password = "1234" 
 
-        if password == correct_password:  
-            st.session_state["authenticated"] = True
-            st.rerun()
-        else:
-            st.error("비밀번호가 틀렸습니다.")
-    
+            if password == correct_password:  
+                st.session_state["authenticated"] = True
+                st.rerun()
+            else:
+                st.error("비밀번호가 틀렸습니다.")
     return False
 
-# ---------------------------------------------------------
-# [설정] 페이지 기본 설정
-# ---------------------------------------------------------
-st.set_page_config(page_title="저평가 주식 찾기", page_icon="💎", layout="wide")
-
-# 🛑 비밀번호 체크
 if not check_password():
     st.stop()
 
-# =========================================================
-# [메인 화면 로직 시작]
-# =========================================================
-
 # ---------------------------------------------------------
-# [설정] 투자 지표 필터링 조건
+# [함수] 데이터 수집 및 처리 (핵심 로직)
 # ---------------------------------------------------------
-CFG = {
-    'MIN_CAP': 400000000000,   
-    'MIN_AMT': 300000000,      
-    'MAX_PBR': 1.0,            
-    'MAX_PER': 10.0,           
-    'MIN_ROE': 10.0,           
-    'MIN_OP': 0,               
-    'MIN_FOREIGN': 10.0,       
-    'MAX_DEBT': 200.0,         
-    'EXCLUDE': '은행|HDC현대산업개발|페인트|코리안리|지주|홀딩스|금융|증권|카드|공사|한국전력|한전KPS|강원랜드|자산|보험|레저|스팩|리츠|생명|해상'
-}
-
-# 제목 및 설명
-st.title("💎 저평가 주식 찾기")
-st.markdown("##### 튼튼하고 안전한 주식 분석기")
-st.markdown("이 프로그램은 시가총액, 영업이익, 부채비율 등 8가지 지표를 분석해 **'싸고 튼튼한 기업'**을 찾아줍니다.")
-st.markdown("---")
-
-# ---------------------------------------------------------
-# [함수] 데이터 수집 및 처리
-# ---------------------------------------------------------
-@st.cache_data
+@st.cache_data(ttl=3600) # 1시간 캐싱
 def get_naver_market_data():
-    status_text = st.empty()
-    status_text.info("⏳ 전체 주식 데이터를 훑어보고 있습니다... (잠시만 기다려주세요)")
+    # 진행 상황 표시 커스텀
+    progress_text = "전체 시장 데이터를 스캔하고 있습니다... (약 1~2분 소요)"
+    my_bar = st.progress(0, text=progress_text)
     
     session = requests.Session()
     headers = {'User-Agent': 'Mozilla/5.0'}
@@ -99,10 +76,11 @@ def get_naver_market_data():
     
     base_url = "https://finance.naver.com/sise/sise_market_sum.naver?sosok=0&page={}"
     total_df = pd.DataFrame()
-    progress_bar = st.progress(0)
     
-    for page in range(1, 45):
-        progress_bar.progress(page / 45)
+    for page in range(1, 45): # 코스피/코스닥 주요 종목 스캔
+        percent_complete = page / 45
+        my_bar.progress(percent_complete, text=f"{progress_text} ({int(percent_complete*100)}%)")
+        
         try:
             res = session.get(base_url.format(page), headers=headers)
             html_table = StringIO(res.content.decode('euc-kr', 'replace'))
@@ -112,6 +90,7 @@ def get_naver_market_data():
             df = dfs[1]
             if df.dropna(how='all').empty: break
             
+            # 종목코드 추출
             soup = BeautifulSoup(res.text, 'html.parser')
             links = soup.select('table.type_2 tr td a.tltle')
             codes = [link['href'].split('=')[-1] for link in links]
@@ -123,9 +102,8 @@ def get_naver_market_data():
             total_df = pd.concat([total_df, df])
         except: break
 
-    progress_bar.empty()
-    status_text.empty()
-
+    my_bar.empty()
+    
     if total_df.empty: return pd.DataFrame()
 
     total_df = total_df.set_index('Ticker')
@@ -138,6 +116,7 @@ def get_naver_market_data():
     current_cols = [c for c in cols_map.keys() if c in total_df.columns]
     df_final = total_df[current_cols].rename(columns=cols_map)
     
+    # 데이터 전처리
     def parse_change(value):
         if pd.isna(value): return 0
         s_val = str(value).strip().replace(',', '')
@@ -150,6 +129,7 @@ def get_naver_market_data():
         if col in df_final.columns:
             df_final[col] = pd.to_numeric(df_final[col], errors='coerce').fillna(0)
             
+    # 단위 보정 (원 단위로)
     df_final['시가총액'] *= 100000000 
     df_final['거래대금'] *= 1000000
     df_final['영업이익'] *= 100000000
@@ -160,11 +140,11 @@ def add_debt_ratio(candidate_df):
     if candidate_df.empty: return candidate_df
     debt_ratios = []
     
-    st.info("🔎 튼튼한 회사인지 재무제표를 꼼꼼히 살피고 있어요...")
-    my_bar = st.progress(0)
+    progress_text = "재무제표(부채비율) 정밀 분석 중..."
+    my_bar = st.progress(0, text=progress_text)
     
     for i, ticker in enumerate(candidate_df.index):
-        my_bar.progress((i + 1) / len(candidate_df))
+        my_bar.progress((i + 1) / len(candidate_df), text=f"{progress_text} ({candidate_df.iloc[i]['Name']})")
         try:
             url = f"https://finance.naver.com/item/main.naver?code={ticker}"
             res = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
@@ -180,7 +160,7 @@ def add_debt_ratio(candidate_df):
                         found = True
                         break
             if not found: debt_ratios.append(9999.0)
-            time.sleep(0.05) 
+            time.sleep(0.02) 
         except: debt_ratios.append(9999.0)
 
     my_bar.empty()
@@ -211,7 +191,7 @@ def get_detailed_daily_data(ticker, days=1825):
             
             if stop_flag or page > 400: break
             page += 1
-            time.sleep(0.02)
+            time.sleep(0.01)
         except: break
             
     df_price = pd.DataFrame(price_list)
@@ -220,163 +200,205 @@ def get_detailed_daily_data(ticker, days=1825):
     return df_price
 
 # =========================================================
-# [UI 구성]
+# [UI - 사이드바] 검색 조건 설정 (완전한 웹사이트의 핵심)
 # =========================================================
+with st.sidebar:
+    st.header("🔍 검색 필터 설정")
+    st.markdown("원하는 조건으로 주식을 찾아보세요.")
+    
+    with st.expander("기본 조건 (Valuation)", expanded=True):
+        in_max_per = st.slider("최대 PER (주가수익비율)", 0.0, 50.0, 10.0, step=0.5, help="낮을수록 저평가")
+        in_max_pbr = st.slider("최대 PBR (주가순자산비율)", 0.0, 5.0, 1.0, step=0.1, help="1 미만이면 자산가치보다 쌈")
+        in_min_roe = st.slider("최소 ROE (자기자본이익률)", 0.0, 30.0, 10.0, help="높을수록 돈을 잘 범")
 
-st.markdown("""
-    <style>
-    div.stButton > button[kind="primary"] {
-        background-color: #0078FF !important;
-        border-color: #0078FF !important;
-        color: white !important;
-    }
-    div.stButton > button[kind="primary"]:hover {
-        background-color: #0056b3 !important;
-        border-color: #0056b3 !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
+    with st.expander("재무 안정성 & 수급", expanded=False):
+        in_max_debt = st.slider("최대 부채비율 (%)", 0.0, 500.0, 200.0, step=10.0)
+        in_min_foreign = st.slider("최소 외국인 지분율 (%)", 0.0, 50.0, 5.0, step=1.0)
+        in_min_amt = st.number_input("최소 거래대금 (억원)", value=3, step=1) * 100000000
 
-if 'result' not in st.session_state:
-    st.info("👇 아래 **'분석 시작하기'** 버튼을 눌러주세요.")
+    with st.expander("제외할 업종/키워드", expanded=False):
+        default_exclude = '은행|HDC현대산업개발|페인트|코리안리|지주|홀딩스|금융|증권|카드|공사|한국전력|한전KPS|강원랜드|자산|보험|레저|스팩|리츠|생명|해상'
+        in_exclude = st.text_area("제외 키워드 ( '|' 로 구분)", value=default_exclude, height=100)
 
-if st.button("분석 시작하기 (클릭)", type="primary", use_container_width=True):
+    st.markdown("---")
+    # [분석 시작 버튼] 사이드바 하단 배치
+    run_btn = st.button("🚀 조건에 맞는 종목 찾기", type="primary", use_container_width=True)
+    st.caption("버튼을 누르면 분석이 시작됩니다.")
+
+# =========================================================
+# [메인 화면]
+# =========================================================
+st.title("💎 저평가 우량주 발굴기")
+st.markdown(f"""
+**설정된 조건:** PER **{in_max_per}**이하, PBR **{in_max_pbr}**이하, ROE **{in_min_roe}%**이상인 
+싸고 튼튼한 기업을 찾습니다.
+""")
+
+# 세션 상태 초기화 (결과 저장용)
+if 'result_df' not in st.session_state:
+    st.session_state['result_df'] = pd.DataFrame()
+if 'analysis_done' not in st.session_state:
+    st.session_state['analysis_done'] = False
+
+# [분석 로직 실행]
+if run_btn:
+    # 1. 전체 데이터 수집
     df_all = get_naver_market_data()
 
-    cond_cap = df_all['시가총액'] >= CFG['MIN_CAP']
-    cond_amt = df_all['거래대금'] >= CFG['MIN_AMT']
-    cond_pbr = (df_all['PBR'] <= CFG['MAX_PBR']) & (df_all['PBR'] > 0)
-    cond_per = (df_all['PER'] <= CFG['MAX_PER']) & (df_all['PER'] > 0)
-    cond_roe = df_all['ROE'] >= CFG['MIN_ROE']
-    cond_op = df_all['영업이익'] > CFG['MIN_OP']
-    cond_frgn = df_all['외국인비율'] >= CFG['MIN_FOREIGN']
-    cond_nm = ~df_all['Name'].str.contains(CFG['EXCLUDE'])
+    # 2. 1차 필터링
+    cond_cap = df_all['시가총액'] >= 400000000000 # 시총 4000억 이상 (고정)
+    cond_amt = df_all['거래대금'] >= in_min_amt
+    cond_pbr = (df_all['PBR'] <= in_max_pbr) & (df_all['PBR'] > 0)
+    cond_per = (df_all['PER'] <= in_max_per) & (df_all['PER'] > 0)
+    cond_roe = df_all['ROE'] >= in_min_roe
+    cond_op = df_all['영업이익'] > 0 # 적자 기업 제외
+    cond_frgn = df_all['외국인비율'] >= in_min_foreign
+    cond_nm = ~df_all['Name'].str.contains(in_exclude)
 
     df_candidates = df_all[cond_cap & cond_amt & cond_pbr & cond_per & cond_roe & cond_op & cond_frgn & cond_nm].copy()
     
+    # 3. 2차 필터링 (부채비율)
     if not df_candidates.empty:
         df_candidates = add_debt_ratio(df_candidates)
-        cond_debt = df_candidates['부채비율'] <= CFG['MAX_DEBT']
+        cond_debt = df_candidates['부채비율'] <= in_max_debt
         df_final = df_candidates[cond_debt].copy().sort_values(by='시가총액', ascending=False)
-        st.session_state['result'] = df_final
-        st.toast(f"분석 완료! {len(df_final)}개 종목 발견!", icon="🎉") 
+        
+        st.session_state['result_df'] = df_final
+        st.session_state['analysis_done'] = True
     else:
-        st.warning("조건을 만족하는 종목이 없습니다.")
+        st.session_state['result_df'] = pd.DataFrame()
+        st.session_state['analysis_done'] = True
+        st.warning("조건을 만족하는 종목이 없습니다. 필터를 완화해보세요.")
 
 # =========================================================
-# [결과 화면]
+# [결과 리포트] 탭 구조로 변경
 # =========================================================
-if 'result' in st.session_state:
-    df_raw = st.session_state['result'].copy()
+if st.session_state['analysis_done'] and not st.session_state['result_df'].empty:
+    df_res = st.session_state['result_df']
     
-    # [데이터 다이어트] 화면 표시용
-    df_display = df_raw.copy()
-    df_display['시가총액'] = df_display['시가총액'] / 100000000 
-    df_display['거래대금'] = df_display['거래대금'] / 100000000 
-    df_display['영업이익'] = df_display['영업이익'] / 100000000 
-    df_display = df_display.round(2)
+    # 상단 요약 지표 (Dashboard style)
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("발굴된 종목 수", f"{len(df_res)}개")
+    m2.metric("평균 PER", f"{df_res['PER'].mean():.2f}배")
+    m3.metric("평균 PBR", f"{df_res['PBR'].mean():.2f}배")
+    m4.metric("평균 ROE", f"{df_res['ROE'].mean():.2f}%")
+    
+    st.markdown("---")
 
-    cols_to_show = ['Name', '종가', '등락률', '시가총액', '거래대금', 'PER', 'ROE', 'PBR', '영업이익', '부채비율']
-    df_display = df_display[cols_to_show]
-    df_display.columns = ['종목명', '현재가', '등락률', '시총(억)', '거래대금(억)', 'PER', 'ROE', 'PBR', '영업이익(억)', '부채비율(%)']
-
-    st.success(f"**총 {len(df_display)}개의 종목**을 찾았습니다!")
-    st.dataframe(df_display, use_container_width=True, hide_index=True)
+    # 탭 구성
+    tab1, tab2, tab3 = st.tabs(["📊 종목 리스트", "🗺️ 시장 지도 (TreeMap)", "📉 상세 차트 분석"])
 
     # ---------------------------------------------------------
-    # [수정됨] TreeMap 시각화 (데이터 클리닝 강화)
+    # TAB 1: 데이터프레임 리스트
     # ---------------------------------------------------------
-    if not df_raw.empty:
-        st.caption("박스 크기는 **시가총액**, 색상은 **등락률**을 의미합니다. (빨강: 상승, 파랑: 하락)")
+    with tab1:
+        st.subheader("📋 선별된 종목 목록")
+        
+        # 표시용 데이터 생성
+        df_disp = df_res.copy()
+        df_disp['시가총액'] = df_disp['시가총액'] / 100000000 
+        df_disp['거래대금'] = df_disp['거래대금'] / 100000000 
+        df_disp['영업이익'] = df_disp['영업이익'] / 100000000 
+        df_disp = df_disp.round(2)
+        
+        cols_show = ['Name', '종가', '등락률', '시가총액', 'PER', 'ROE', 'PBR', '부채비율', '외국인비율']
+        df_disp = df_disp[cols_show]
+        df_disp.columns = ['종목명', '현재가', '등락률', '시총(억)', 'PER', 'ROE', 'PBR', '부채(%)', '외인(%)']
+        
+        st.dataframe(df_disp, use_container_width=True, hide_index=True)
+        
+        # [CSV 다운로드 버튼]
+        csv = df_disp.to_csv(index=False).encode('utf-8-sig')
+        st.download_button(
+            label="💾 엑셀(CSV)로 다운로드",
+            data=csv,
+            file_name='저평가_우량주_리스트.csv',
+            mime='text/csv',
+        )
 
-        # [핵심 수정] 등락률을 더 강력하게 숫자로 변환하는 함수
+    # ---------------------------------------------------------
+    # TAB 2: 트리맵 (시장 지도)
+    # ---------------------------------------------------------
+    with tab2:
+        st.subheader("🗺️ 한눈에 보는 시장 지도")
+        st.caption("박스 크기: 시가총액 / 색상: 등락률 (빨강:상승, 파랑:하락)")
+        
+        # 등락률 클리닝
         def clean_rate_v2(x):
             try:
-                # 1. 값이 없으면 0.0 반환
-                if pd.isna(x) or x == '':
-                    return 0.0
-                
-                # 2. 문자열로 변환 후 공백, %, + 기호 제거
+                if pd.isna(x) or x == '': return 0.0
                 s_val = str(x).strip().replace('%', '').replace('+', '')
-                
-                # 3. 숫자로 변환
                 return float(s_val)
-            except:
-                return 0.0
+            except: return 0.0
 
-        # 데이터 변환 적용
-        df_raw['CleanRate'] = df_raw['등락률'].apply(clean_rate_v2).fillna(0.0)
+        df_res['CleanRate'] = df_res['등락률'].apply(clean_rate_v2).fillna(0.0)
+        max_val = max(abs(df_res['CleanRate'].min()), abs(df_res['CleanRate'].max()), 1.0)
         
-        # 색상 범위 설정 (0을 기준으로 대칭)
-        max_abs_val = max(abs(df_raw['CleanRate'].min()), abs(df_raw['CleanRate'].max()), 1.0)
-        
-        # 트리맵 생성
         fig_map = px.treemap(
-            df_raw,
-            path=[px.Constant("발굴된 종목"), 'Name'], 
+            df_res,
+            path=[px.Constant("전체"), 'Name'],
             values='시가총액',
-            color='CleanRate', 
-            color_continuous_scale='RdBu_r', 
-            range_color=[-max_abs_val, max_abs_val],
-            custom_data=['종가', 'PER', 'PBR', 'ROE', 'CleanRate'] # CleanRate 추가
+            color='CleanRate',
+            color_continuous_scale='RdBu_r',
+            range_color=[-max_val, max_val],
+            custom_data=['종가', 'PER', 'PBR', 'CleanRate']
         )
-
-        # 텍스트 포맷 설정 (NaN이 안 뜨게 customdata 사용)
-        fig_map.data[0].texttemplate = "<b>%{label}</b><br>%{customdata[4]:.2f}%"
+        fig_map.data[0].texttemplate = "<b>%{label}</b><br>%{customdata[3]:.2f}%"
+        fig_map.update_traces(hovertemplate="<b>%{label}</b><br>등락률: %{customdata[3]:.2f}%<br>PER: %{customdata[1]} / PBR: %{customdata[2]}")
+        fig_map.update_layout(margin=dict(t=10, l=0, r=0, b=0), height=600)
         
-        fig_map.update_traces(
-            hovertemplate="<b>%{label}</b><br>💰 시가총액: %{value:,.0f}원<br>📊 등락률: %{customdata[4]:.2f}%<br>💵 현재가: %{customdata[0]:,}원<br>📈 PER: %{customdata[1]:.2f} / PBR: %{customdata[2]:.2f}"
-        )
-        
-        fig_map.update_layout(margin=dict(t=0, l=0, r=0, b=0), height=500)
         st.plotly_chart(fig_map, use_container_width=True)
 
-    st.markdown("---")
-    st.subheader("📈 차트 분석")
-    st.caption("아래 목록에서 궁금한 종목을 선택하고 **'차트 보기'** 버튼을 눌러보세요.")
-    
-    ticker_list = [f"{row['Name']} ({ticker})" for ticker, row in df_raw.iterrows()]
-    selected = st.selectbox("종목 선택", ticker_list)
-    
-    if st.button("차트 보기", type="secondary"):
-        if selected:
-            code = selected.split('(')[-1].replace(')', '')
-            name = selected.split(' (')[0]
+    # ---------------------------------------------------------
+    # TAB 3: 상세 차트
+    # ---------------------------------------------------------
+    with tab3:
+        st.subheader("📉 종목별 상세 차트")
+        col_sel, col_empty = st.columns([1, 2])
+        with col_sel:
+            ticker_list = [f"{row['Name']} ({ticker})" for ticker, row in df_res.iterrows()]
+            selected_ticker = st.selectbox("종목을 선택하세요", ticker_list)
+        
+        if selected_ticker:
+            code = selected_ticker.split('(')[-1].replace(')', '')
+            name = selected_ticker.split(' (')[0]
             
-            with st.spinner(f"'{name}'의 과거 데이터를 가져오는 중..."):
-                df_daily = get_detailed_daily_data(code)
+            with st.spinner(f"'{name}' 데이터 로딩 중..."):
+                df_chart = get_detailed_daily_data(code)
                 
-                if not df_daily.empty:
-                    font_filename = 'NanumGothic.ttf'
-                    if not os.path.exists(font_filename):
+                if not df_chart.empty:
+                    # 폰트 설정
+                    font_path = 'NanumGothic.ttf'
+                    if not os.path.exists(font_path):
                         url = 'https://github.com/google/fonts/raw/main/ofl/nanumgothic/NanumGothic-Regular.ttf'
-                        with open(font_filename, 'wb') as f:
+                        with open(font_path, 'wb') as f:
                             f.write(requests.get(url).content)
-                    
-                    fm.fontManager.addfont(font_filename)
-                    font_name = fm.FontProperties(fname=font_filename).get_name()
-                    plt.rc('font', family=font_name)
+                    fm.fontManager.addfont(font_path)
+                    font_prop = fm.FontProperties(fname=font_path)
+                    plt.rc('font', family=font_prop.get_name())
                     plt.rcParams['axes.unicode_minus'] = False
                     
-                    fig, ax = plt.subplots(figsize=(50, 20))
+                    # 그래프 그리기
+                    fig, ax = plt.subplots(figsize=(12, 6)) # 화면 비율 조정
+                    ax.plot(df_chart.index, df_chart['Close'], color='black', alpha=0.6, label='주가')
                     
-                    ax.plot(df_daily.index, df_daily['Close'], label='주가', color='black', alpha=0.6)
+                    ma120 = df_chart['Close'].rolling(120).mean()
+                    ma240 = df_chart['Close'].rolling(240).mean()
                     
-                    ma120 = df_daily['Close'].rolling(window=120).mean()
-                    ma240 = df_daily['Close'].rolling(window=240).mean()
-                    ax.plot(df_daily.index, ma120, label='120일선 (6개월 평균)', color='green', linestyle='--', linewidth=2)
-                    ax.plot(df_daily.index, ma240, label='240일선 (1년 평균)', color='red', linestyle='--', linewidth=2)
+                    ax.plot(df_chart.index, ma120, 'g--', label='120일선', linewidth=1.5)
+                    ax.plot(df_chart.index, ma240, 'r--', label='240일선', linewidth=1.5)
                     
-                    ax.set_title(f"{name} (최근 5년)", fontsize=18, fontweight='bold')
-                    ax.legend(fontsize=12)
+                    ax.set_title(f"{name} 주가 추이 (5년)", fontsize=15)
+                    ax.legend()
                     ax.grid(True, alpha=0.3)
                     
                     st.pyplot(fig, use_container_width=True)
                     
-                    st.markdown("""
-                    **💡 차트 보는 팁**
-                    * **초록색 점선(120일선)**보다 주가가 위에 있으면 상승 추세일 가능성이 높습니다.
-                    * **빨간색 점선(240일선)**은 1년 평균 가격으로, 장기적인 바닥을 확인하는 데 도움이 됩니다.
-                    """)
-                else:
-                    st.error("데이터가 없습니다.")
+                    # 간단 코멘트
+                    curr_price = df_chart['Close'].iloc[-1]
+                    ma240_val = ma240.iloc[-1]
+                    
+                    if curr_price < ma240_val:
+                        st.success("✅ 현재 주가가 240일 장기 이동평균선 아래에 있습니다. (저점 매수 기회 가능성)")
+                    else:
+                        st.info("ℹ️ 현재 주가가 240일 이동평균선 위에 있습니다. (추세 상승 중)")
