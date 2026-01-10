@@ -356,7 +356,6 @@ if 'analysis_done' not in st.session_state:
 # 1. 분석 전: 대시보드 설명 화면 (디자인 업그레이드)
 if not st.session_state['analysis_done']:
     # [헤더] 투자 철학 문구
-    st.markdown("### 📉 \"싸게 사서 비싸게 판다.\" 투자의 기본을 지키는 가장 쉬운 방법")
     st.info("👈 **왼쪽 사이드바**에서 원하는 조건을 설정하고 **'🚀 조건에 맞는 종목 찾기'** 버튼을 눌러주세요.")
 
     st.markdown("---")
@@ -573,3 +572,4 @@ if st.session_state['analysis_done'] and not st.session_state['result_df'].empty
                         st.success("✅ 현재 주가가 240일 장기 이동평균선 아래에 있습니다. (저점 매수 기회 가능성)")
                     else:
                         st.info("ℹ️ 현재 주가가 240일 이동평균선 위에 있습니다. (추세 상승 중)")
+
