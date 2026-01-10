@@ -22,7 +22,7 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# [기능] 비밀번호 체크 (윈도우 로그인 스타일)
+# [기능] 비밀번호 체크 (윈도우 로그인 스타일 - 버튼 수정)
 # ---------------------------------------------------------
 def check_password():
     """윈도우 잠금화면 스타일의 로그인"""
@@ -33,7 +33,7 @@ def check_password():
         return True
 
     # -----------------------------------------------------
-    # [CSS] 윈도우 스타일 디자인 주입
+    # [CSS] 윈도우 스타일 디자인 주입 (버튼 색상 수정됨)
     # -----------------------------------------------------
     st.markdown(
         """
@@ -76,17 +76,17 @@ def check_password():
             text-align: center;
         }
 
-        /* 6. 버튼 디자인 */
+        /* 6. 버튼 디자인 (수정됨: 글씨색과 테두리색을 검은색으로 변경) */
         .stButton > button {
-            background-color: rgba(255, 255, 255, 0.2) !important;
-            color: white !important;
-            border: 1px solid white !important;
+            background-color: rgba(255, 255, 255, 0.8) !important;
+            color: black !important;
+            border: 1px solid black !important;
             border-radius: 5px;
             width: 100%;
         }
         .stButton > button:hover {
-            background-color: rgba(255, 255, 255, 0.4) !important;
-            border-color: white !important;
+            background-color: rgba(255, 255, 255, 1.0) !important;
+            border-color: black !important;
         }
         
         /* 에러 메시지 박스 스타일 */
@@ -524,6 +524,7 @@ if st.session_state['analysis_done'] and not st.session_state['result_df'].empty
                         st.success("✅ 현재 주가가 240일 장기 이동평균선 아래에 있습니다. (저점 매수 기회 가능성)")
                     else:
                         st.info("ℹ️ 현재 주가가 240일 이동평균선 위에 있습니다. (추세 상승 중)")
+
 
 
 
