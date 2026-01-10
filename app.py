@@ -22,19 +22,7 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# [기능] 비밀번호 체크 (투명 배경 & 테두리 스타일)
-# ---------------------------------------------------------
-# ---------------------------------------------------------
-# [기능] 비밀번호 체크 (투명 배경 & 테두리 스타일 - 최종 수정)
-# ---------------------------------------------------------
-# ---------------------------------------------------------
-# [기능] 비밀번호 체크 (투명 배경 + 검정색 텍스트 수정)
-# ---------------------------------------------------------
-# ---------------------------------------------------------
-# [기능] 비밀번호 체크 (완전 투명 배경 + 검정 글씨)
-# ---------------------------------------------------------
-# ---------------------------------------------------------
-# [기능] 비밀번호 체크 (강력 투명화 버전)
+# [기능] 비밀번호 체크 (완벽한 투명화 버전)
 # ---------------------------------------------------------
 def check_password():
     """윈도우 잠금화면 스타일의 로그인"""
@@ -45,7 +33,7 @@ def check_password():
         return True
 
     # -----------------------------------------------------
-    # [CSS] 입력창과 버튼의 흰색 배경 강제 제거
+    # [CSS] 입력창/버튼 배경 완전 제거 + 테두리/글자색 설정
     # -----------------------------------------------------
     st.markdown(
         """
@@ -62,66 +50,69 @@ def check_password():
         /* 2. 헤더 숨김 */
         header {visibility: hidden;}
         
-        /* 3. 로그인 컨테이너 (여기는 전체 틀이라 살짝 어둡게 유지하거나 투명하게) */
+        /* 3. 로그인 컨테이너 */
         div[data-testid="column"] {
             padding: 50px;
             text-align: center;
         }
 
-        /* 4. 텍스트 기본 색상 (흰색) */
+        /* 4. 기본 텍스트 색상 (흰색) */
         h1, h2, h3, p, label {
             color: white !important;
             text-align: center;
             font-family: 'Segoe UI', sans-serif;
-            text-shadow: 0 2px 5px rgba(0,0,0,0.5); /* 글자 잘 보이게 그림자 */
+            text-shadow: 0 2px 5px rgba(0,0,0,0.5);
         }
 
         /* =========================================================
-           [핵심] 입력창 투명화 (흰색 박스 제거)
+           [핵심] 입력창 스타일 (완전 투명 + 흰색 테두리 + 검정 글씨)
            ========================================================= */
         
-        /* Streamlit 입력창의 가장 바깥쪽 컨테이너 */
-        div[data-baseweb="input"] {
-            background-color: rgba(255, 255, 255, 0.0) !important; /* 완전 투명 */
-            border: 2px solid white !important;       /* 테두리는 흰색 */
+        /* 1) 입력창의 가장 바깥쪽 컨테이너 (여기가 흰색 배경의 원인) */
+        div[data-baseweb="base-input"] {
+            background-color: transparent !important; /* 배경 투명 */
+            border: 2px solid white !important;       /* 테두리 흰색 */
             border-radius: 10px !important;
         }
 
-        /* 입력창 내부의 실제 input 태그 */
-        input.st-ae {
-            background-color: transparent !important;
-        }
-        
-        /* 입력되는 글자 색상 (검정) */
-        input[type="password"] {
-            color: black !important;
-            font-weight: 800;
-            caret-color: white; /* 커서는 흰색 */
+        /* 2) 그 안쪽의 input 컨테이너 */
+        div[data-baseweb="input"] {
+            background-color: transparent !important; 
         }
 
-        /* Placeholder (PIN 번호 입력) 색상 */
+        /* 3) 실제 글자가 입력되는 input 태그 */
+        input[type="password"] {
+            background-color: transparent !important;
+            color: black !important;        /* 입력 글자 검정 */
+            caret-color: white !important;  /* 커서 흰색 */
+            font-weight: 800;               /* 글자 굵게 */
+            font-size: 18px;
+        }
+
+        /* 4) Placeholder (안내 문구) 색상 */
         ::placeholder {
             color: rgba(0, 0, 0, 0.7) !important; /* 진한 검정 */
             font-weight: bold;
         }
 
         /* =========================================================
-           [핵심] 버튼 투명화 (흰색 박스 제거)
+           [핵심] 버튼 스타일 (완전 투명 + 흰색 테두리 + 검정 글씨)
            ========================================================= */
         
-        /* 버튼 스타일 강제 적용 */
         div[data-testid="stFormSubmitButton"] > button {
-            background-color: rgba(255, 255, 255, 0.0) !important; /* 완전 투명 */
-            color: black !important;                 /* 글자 검정 */
-            border: 2px solid white !important;      /* 테두리 흰색 */
+            background-color: transparent !important; /* 배경 투명 */
+            color: black !important;                  /* 글자 검정 */
+            border: 2px solid white !important;       /* 테두리 흰색 */
             border-radius: 10px;
+            height: 50px;
+            font-size: 18px;
             font-weight: 800;
             transition: all 0.3s;
         }
 
         /* 버튼 마우스 올렸을 때 (Hover) */
         div[data-testid="stFormSubmitButton"] > button:hover {
-            background-color: rgba(255, 255, 255, 0.3) !important; /* 살짝 흰색 틴트 */
+            background-color: rgba(255, 255, 255, 0.3) !important;
             border-color: white !important;
             color: black !important;
         }
@@ -562,6 +553,7 @@ if st.session_state['analysis_done'] and not st.session_state['result_df'].empty
                         st.success("✅ 현재 주가가 240일 장기 이동평균선 아래에 있습니다. (저점 매수 기회 가능성)")
                     else:
                         st.info("ℹ️ 현재 주가가 240일 이동평균선 위에 있습니다. (추세 상승 중)")
+
 
 
 
