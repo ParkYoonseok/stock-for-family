@@ -10,21 +10,20 @@ import matplotlib.pyplot as plt
 from matplotlib import font_manager, rc
 import platform
 import warnings
+import os
+import matplotlib.font_manager as fm
 
 # ---------------------------------------------------------
 # [기능 추가] 비밀번호 체크 함수
 # ---------------------------------------------------------
 def check_password():
     """비밀번호가 맞는지 확인하는 함수"""
-    # 세션 상태에 인증 여부 변수가 없으면 초기화
     if "authenticated" not in st.session_state:
         st.session_state["authenticated"] = False
 
-    # 이미 로그인에 성공했으면 True 반환 (통과)
     if st.session_state["authenticated"]:
         return True
 
-    # 로그인 안 된 상태면 비밀번호 입력창 띄우기
     st.title("🔒 지인 전용 주식 비서")
     st.write("비밀번호를 입력해주세요.")
     
@@ -32,9 +31,15 @@ def check_password():
     
     if st.button("로그인"):
         # 🔐 금고(secrets)에서 비밀번호를 꺼내옵니다
-        if password == st.secrets["FAMILY_PASSWORD"]:  
+        # (로컬 테스트용으로 secrets가 없으면 에러가 날 수 있으니 예외처리)
+        try:
+            correct_password = st.secrets["FAMILY_PASSWORD"]
+        except:
+            correct_password = "1234" # secrets 설정 안되어있으면 기본값 1234
+
+        if password == correct_password:  
             st.session_state["authenticated"] = True
-            st.rerun()  # 화면을 새로고침해서 내용을 보여줌
+            st.rerun()
         else:
             st.error("비밀번호가 틀렸습니다.")
     
@@ -45,16 +50,16 @@ def check_password():
 # ---------------------------------------------------------
 st.set_page_config(page_title="저평가 주식 찾기", page_icon="💎", layout="wide")
 
-# 🛑 [핵심] 비밀번호를 확인합니다. 통과 못하면 여기서 멈춥니다!
+# 🛑 비밀번호 체크
 if not check_password():
     st.stop()
 
 # =========================================================
-# 👇 여기서부터는 보내주신 기존 코드 그대로입니다 (로그인 성공 시 실행)
+# [메인 화면 로직 시작]
 # =========================================================
 
 # ---------------------------------------------------------
-# [설정] 투자 지표 필터링 조건 (기존 유지)
+# [설정] 투자 지표 필터링 조건
 # ---------------------------------------------------------
 CFG = {
     'MIN_CAP': 400000000000,   
@@ -68,13 +73,14 @@ CFG = {
     'EXCLUDE': '은행|HDC현대산업개발|페인트|코리안리|지주|홀딩스|금융|증권|카드|공사|한국전력|한전KPS|강원랜드|자산|보험|레저|스팩|리츠|생명|해상'
 }
 
-# 요청하신 제목 수정
-st.title("💎 저평가 주식")
-st.markdown("##### 재무 상태가 튼튼한 종목 분석기")
+# 제목 및 설명
+st.title("💎 저평가 주식 찾기")
+st.markdown("##### 튼튼하고 안전한 주식 분석기")
+st.markdown("이 프로그램은 시가총액, 영업이익, 부채비율 등 8가지 지표를 분석해 **'싸고 튼튼한 기업'**을 찾아줍니다.")
 st.markdown("---")
 
 # ---------------------------------------------------------
-# [함수 1] 데이터 수집 로직 (기존 유지)
+# [함수] 데이터 수집 및 처리
 # ---------------------------------------------------------
 @st.cache_data
 def get_naver_market_data():
@@ -119,7 +125,7 @@ def get_naver_market_data():
         except: break
 
     progress_bar.empty()
-    status_text.empty() # 문구 지우기
+    status_text.empty()
 
     if total_df.empty: return pd.DataFrame()
 
@@ -215,15 +221,15 @@ def get_detailed_daily_data(ticker, days=1825):
     return df_price
 
 # =========================================================
-# [메인 화면 구성]
+# [UI 구성] 사이드바 제거 -> 메인 화면 중앙 배치
 # =========================================================
 
-# 사이드바 설정
-st.sidebar.header("메뉴")
-st.sidebar.write("아래 버튼을 눌러주세요.")
+# 안내 문구 (아직 분석 결과가 없을 때만 보임)
+if 'result' not in st.session_state:
+    st.info("👇 아래 **'분석 시작하기'** 버튼을 눌러주세요.")
 
-# [수정됨] 버튼 이름과 아이콘 변경
-if st.sidebar.button("🔍 찾기"):
+# 🔍 [수정] 메인 화면에 크고 잘 보이는 버튼 배치
+if st.button("🚀 분석 시작하기 (클릭)", type="primary", use_container_width=True):
     df_all = get_naver_market_data()
 
     cond_cap = df_all['시가총액'] >= CFG['MIN_CAP']
@@ -243,16 +249,13 @@ if st.sidebar.button("🔍 찾기"):
         df_final = df_candidates[cond_debt].copy().sort_values(by='시가총액', ascending=False)
         
         st.session_state['result'] = df_final
-        st.toast(f"분석 완료! {len(df_final)}개 종목 발견!", icon="🎉") # 알림 메시지 추가
+        st.toast(f"분석 완료! {len(df_final)}개 종목 발견!", icon="🎉") 
     else:
         st.warning("조건을 만족하는 종목이 없습니다.")
 
-# [개선] 초기 화면 안내 메시지 (데이터 없을 때)
-if 'result' not in st.session_state:
-    st.info("👈 **왼쪽 사이드바의 '찾기' 버튼**을 누르면 분석이 시작됩니다.")
-    st.write("이 프로그램은 시가총액, 영업이익, 부채비율 등 8가지 지표를 분석해 싸고 튼튼한 기업을 찾아줍니다.")
-
+# =========================================================
 # [결과 화면]
+# =========================================================
 if 'result' in st.session_state:
     df_final = st.session_state['result']
     
@@ -261,32 +264,35 @@ if 'result' in st.session_state:
 
     st.markdown("---")
     st.subheader("📈 차트 분석")
-    st.caption("종목을 선택하면 5년치 주가 흐름을 보여줍니다.")
+    st.caption("아래 목록에서 궁금한 종목을 선택하고 **'차트 보기'** 버튼을 눌러보세요.")
     
+    # 선택 박스와 차트 버튼
     ticker_list = [f"{row['Name']} ({ticker})" for ticker, row in df_final.iterrows()]
     selected = st.selectbox("종목 선택", ticker_list)
     
-    if selected:
-        code = selected.split('(')[-1].replace(')', '')
-        name = selected.split(' (')[0]
-        
-        if st.button("차트 보기"):
+    if st.button("차트 보기", type="secondary"):
+        if selected:
+            code = selected.split('(')[-1].replace(')', '')
+            name = selected.split(' (')[0]
+            
             with st.spinner(f"'{name}'의 과거 데이터를 가져오는 중..."):
                 df_daily = get_detailed_daily_data(code)
                 
                 if not df_daily.empty:
-                    import os
-                    import matplotlib.font_manager as fm
+                    # -------------------------------------------------------
+                    # [폰트 설정] 리눅스 서버 대응 (한글 깨짐 방지)
+                    # -------------------------------------------------------
                     font_filename = 'NanumGothic.ttf'
-
                     if not os.path.exists(font_filename):
                         url = 'https://github.com/google/fonts/raw/main/ofl/nanumgothic/NanumGothic-Regular.ttf'
                         with open(font_filename, 'wb') as f:
                             f.write(requests.get(url).content)
+                    
                     fm.fontManager.addfont(font_filename)
                     font_name = fm.FontProperties(fname=font_filename).get_name()
                     plt.rc('font', family=font_name)
                     plt.rcParams['axes.unicode_minus'] = False
+                    # -------------------------------------------------------
                     
                     fig, ax = plt.subplots(figsize=(12, 6))
                     ax.plot(df_daily.index, df_daily['Close'], label='주가', color='black', alpha=0.6)
@@ -303,17 +309,10 @@ if 'result' in st.session_state:
                     
                     st.pyplot(fig)
                     
-                    # [개선] 차트 도움말 추가
                     st.markdown("""
                     **💡 차트 보는 팁**
-                    * 초록색 점선(120일선)보다 주가가 위에 있으면 상승 추세일 가능성이 높습니다.
-                    * 빨간색 점선(240일선)은 1년 평균 가격으로, 장기적인 바닥을 확인하는 데 도움이 됩니다.
+                    * **초록색 점선(120일선)**보다 주가가 위에 있으면 상승 추세일 가능성이 높습니다.
+                    * **빨간색 점선(240일선)**은 1년 평균 가격으로, 장기적인 바닥을 확인하는 데 도움이 됩니다.
                     """)
                 else:
-
                     st.error("데이터가 없습니다.")
-
-
-
-
-
