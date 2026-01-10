@@ -253,7 +253,7 @@ def add_debt_ratio(candidate_df):
     if candidate_df.empty: return candidate_df
     debt_ratios = []
     
-    progress_text = "재무제표(부채비율) 정밀 분석 중..."
+    progress_text = "재무제표 정밀 분석 중..."
     my_bar = st.progress(0, text=progress_text)
     
     for i, ticker in enumerate(candidate_df.index):
@@ -572,5 +572,6 @@ if st.session_state['analysis_done'] and not st.session_state['result_df'].empty
                         st.success("✅ 현재 주가가 240일 장기 이동평균선 아래에 있습니다. (저점 매수 기회 가능성)")
                     else:
                         st.info("ℹ️ 현재 주가가 240일 이동평균선 위에 있습니다. (추세 상승 중)")
+
 
 
