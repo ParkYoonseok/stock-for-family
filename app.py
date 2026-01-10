@@ -255,24 +255,24 @@ if not st.session_state['analysis_done']:
         with st.container(border=True):
             st.markdown("#### 💰 PER (본전 뽑는 시간)")
             st.markdown("""
-            * 투자 원금을 회수하는 데 걸리는 시간(년)
-            **10배 이하** (낮을수록 저평가)
+            투자 원금을 회수하는 데 걸리는 시간(년)
+            * **10배 이하** (낮을수록 저평가)
             """)
             
     with col2:
         with st.container(border=True):
             st.markdown("#### 🏢 PBR (재산 대비 가격)")
             st.markdown("""
-            * 회사가 가진 재산보다 주가가 싼지 비싼지
-            **1배 미만** (낮을수록 바겐세일)
+            회사가 가진 재산보다 주가가 싼지 비싼지
+            * **1배 미만** (낮을수록 바겐세일)
             """)
             
     with col3:
         with st.container(border=True):
             st.markdown("#### 📈 ROE (돈 버는 실력)")
             st.markdown("""
-            * 내 돈(자본)을 굴려 1년에 몇 % 수익을 내나?
-            **10% 이상** (높을수록 좋음)
+            내 돈(자본)을 굴려 1년에 몇 % 수익을 내나?
+            * **10% 이상** (높을수록 좋음)
             """)
 
     st.markdown("") # 여백
@@ -442,6 +442,7 @@ if st.session_state['analysis_done'] and not st.session_state['result_df'].empty
                         st.success("✅ 현재 주가가 240일 장기 이동평균선 아래에 있습니다. (저점 매수 기회 가능성)")
                     else:
                         st.info("ℹ️ 현재 주가가 240일 이동평균선 위에 있습니다. (추세 상승 중)")
+
 
 
 
